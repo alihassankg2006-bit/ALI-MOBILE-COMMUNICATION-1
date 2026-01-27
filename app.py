@@ -6,61 +6,65 @@ import os
 # 1. ایپ کی بنیادی سیٹنگ
 st.set_page_config(page_title="Ali Mobiles & Communication", layout="wide")
 
-# 2. پروفیشنل ہاف-ہاف ڈیزائن (CSS)
+# 2. الٹرا وی آئی پی ایکول باکس ڈیزائن (CSS)
 st.markdown("""
     <style>
     .block-container { padding: 0.5rem 0.5rem !important; }
-    .stApp { background-color: #f8f9fa; }
+    .stApp { background-color: #ffffff; }
     
-    /* میٹرک کارڈ (Left Side) */
-    .metric-half {
-        height: 100px;
+    /* تمام ڈبوں کا ایک جیسا ڈیزائن */
+    .equal-tile {
+        height: 120px;
+        border-radius: 15px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        border-radius: 15px 0px 0px 15px; /* صرف بائیں طرف سے گول */
-        color: white !important;
-        box-shadow: -2px 4px 10px rgba(0,0,0,0.1);
         text-align: center;
+        color: white !important;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.15);
+        margin-bottom: 10px;
+        padding: 10px;
     }
-    .m-label { font-size: 12px; font-weight: bold; opacity: 0.9; text-transform: uppercase; }
-    .m-val { font-size: 26px; font-weight: 900; }
+    .tile-label { font-size: 12px; font-weight: bold; text-transform: uppercase; opacity: 0.9; }
+    .tile-val { font-size: 30px; font-weight: 900; margin-top: 5px; }
 
-    /* اسٹریم لٹ بٹن کو کارڈ کے ساتھ جوڑنا (Right Side) */
-    .stButton > button {
-        height: 100px !important;
+    /* بٹنوں کو بھی بالکل ویسا ہی بنانا */
+    div.stButton > button {
+        height: 120px !important;
         width: 100% !important;
-        border-radius: 0px 15px 15px 0px !important; /* صرف دائیں طرف سے گول */
-        font-size: 18px !important;
+        border-radius: 15px !important;
+        font-size: 20px !important;
         font-weight: bold !important;
         color: white !important;
         border: none !important;
-        box-shadow: 2px 4px 10px rgba(0,0,0,0.1) !important;
-        margin-left: -1px !important; /* بالکل اٹیچ کرنے کے لیے */
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.15) !important;
+        margin-bottom: 10px !important;
+        text-transform: uppercase;
     }
+    div.stButton > button:hover { opacity: 0.9; transform: translateY(-2px); transition: 0.2s; }
 
-    /* رنگوں کی سیٹنگ */
-    .bg-green { background: linear-gradient(135deg, #1b5e20, #2e7d32); }
-    .bg-purple { background: linear-gradient(135deg, #4a148c, #6a1b9a); }
-    .bg-orange { background: linear-gradient(135deg, #e65100, #f57c00); }
-    .bg-red { background: linear-gradient(135deg, #b71c1c, #d32f2f); }
+    /* ہر ڈبے کا اپنا الگ گہرا رنگ */
+    .bg-1 { background: linear-gradient(135deg, #1b5e20, #2e7d32); } /* کل پرافٹ - ہرا */
+    .bg-2 { background: linear-gradient(135deg, #0d47a1, #1976d2); } /* ریپیرنگ - نیلا */
+    .bg-3 { background: linear-gradient(135deg, #b71c1c, #d32f2f); } /* گھر خرچ - سرخ */
+    .bg-4 { background: linear-gradient(135deg, #e65100, #fb8c00); } /* بینکنگ - نارنجی */
     
-    /* بٹن ہوور ایفیکٹ */
-    .stButton > button:hover { opacity: 0.9; transform: scale(0.98); }
+    /* بٹنوں کے رنگ */
+    button[key="btn_new"] { background: linear-gradient(135deg, #4a148c, #7b1fa2) !important; } /* انٹری - جامنی */
+    button[key="btn_credit"] { background: linear-gradient(135deg, #006064, #0097a7) !important; } /* ادھار - ٹیل */
+    button[key="btn_hist"] { background: linear-gradient(135deg, #c2185b, #e91e63) !important; } /* ہسٹری - گلابی */
+    button[key="btn_home"] { background: linear-gradient(135deg, #37474f, #546e7a) !important; } /* ہوم - سلیٹی */
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو سیکشن
+# 3. لوگو
 cl1, cl2, cl3 = st.columns([1, 0.4, 1])
 with cl2:
-    if os.path.exists("logo.png"): 
-        st.image("logo.png", use_container_width=True)
-    else:
-        st.markdown("<div style='text-align:center; color:#b71c1c; font-weight:bold;'>ALI MOBILES</div>", unsafe_allow_html=True)
+    if os.path.exists("logo.png"): st.image("logo.png", use_container_width=True)
 
 # 4. ڈیٹا ہینڈلنگ
-DATA_FILE = "ali_shop_v15_final.csv"
+DATA_FILE = "ali_shop_v16_equal.csv"
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
@@ -74,52 +78,43 @@ def nav(p):
     st.session_state.page = p
     st.rerun()
 
-# 5. حساب کتاب
+# 5. ڈیٹا کیلکولیشن
 today = datetime.now().date()
 t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
 cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
-he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
-ut = t_df[df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
 rep = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
+he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
 bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
 
-# 6. ہاف-ہاف گرڈ (4 Rows)
+# --- 8 برابر سائز کے رنگین باکسز ---
 
-# Row 1: نقد پرافٹ | ENTRY (GREEN)
-c1_m, c1_b = st.columns(2)
-with c1_m:
-    st.markdown(f"<div class='metric-half bg-green'><div class='m-label'>کل نقد پرافٹ</div><div class='m-val'>{cp}</div></div>", unsafe_allow_html=True)
-with c1_b:
-    if st.button("➕ NEW ENTRY", key="e"): nav("new")
-    st.markdown("<style>div[data-testid='column']:nth-of-type(2) button { background: #2e7d32 !important; }</style>", unsafe_allow_html=True)
+# پہلی قطار: پرافٹ اور ریپیرنگ
+r1_c1, r1_c2 = st.columns(2)
+with r1_c1: st.markdown(f"<div class='equal-tile bg-1'><div class='tile-label'>کل نقد پرافٹ</div><div class='tile-val'>{cp}</div></div>", unsafe_allow_html=True)
+with r1_c2: st.markdown(f"<div class='equal-tile bg-2'><div class='tile-label'>ریپیرنگ پرافٹ</div><div class='tile-val'>{rep}</div></div>", unsafe_allow_html=True)
 
-# Row 2: ریپیرنگ | CREDIT (PURPLE)
-c2_m, c2_b = st.columns(2)
-with c2_m:
-    st.markdown(f"<div class='metric-half bg-purple'><div class='m-label'>ریپیرنگ پرافٹ</div><div class='m-val'>{rep}</div></div>", unsafe_allow_html=True)
-with c2_b:
-    if st.button("📓 CREDIT LIST", key="c"): nav("credit")
-    st.markdown("<style>div[data-testid='column']:nth-of-type(4) button { background: #6a1b9a !important; }</style>", unsafe_allow_html=True)
+# دوسری قطار: گھر خرچ اور بینکنگ
+r2_c1, r2_c2 = st.columns(2)
+with r2_c1: st.markdown(f"<div class='equal-tile bg-3'><div class='tile-label'>گھر کا خرچ</div><div class='tile-val'>{he}</div></div>", unsafe_allow_html=True)
+with r2_c2: st.markdown(f"<div class='equal-tile bg-4'><div class='tile-label'>بینکنگ سیل</div><div class='tile-val'>{bank}</div></div>", unsafe_allow_html=True)
 
-# Row 3: ایزی پیسہ | HISTORY (ORANGE)
-c3_m, c3_b = st.columns(2)
-with c3_m:
-    st.markdown(f"<div class='metric-half bg-orange'><div class='m-label'>ایزی پیسہ سیل</div><div class='m-val'>{bank}</div></div>", unsafe_allow_html=True)
-with c3_b:
-    if st.button("📅 FULL HISTORY", key="h"): nav("history")
-    st.markdown("<style>div[data-testid='column']:nth-of-type(6) button { background: #f57c00 !important; }</style>", unsafe_allow_html=True)
+# تیسری قطار: نئی انٹری اور ادھار لسٹ (بٹن)
+r3_c1, r3_c2 = st.columns(2)
+with r3_c1: 
+    if st.button("➕ NEW ENTRY", key="btn_new"): nav("new")
+with r3_c2: 
+    if st.button("📓 CREDIT LIST", key="btn_credit"): nav("credit")
 
-# Row 4: گھر کا خرچ | HOME (RED)
-c4_m, c4_b = st.columns(2)
-with c4_m:
-    st.markdown(f"<div class='metric-half bg-red'><div class='m-label'>گھر کا خرچ</div><div class='m-val'>{he}</div></div>", unsafe_allow_html=True)
-with c4_b:
-    if st.button("🏠 DASHBOARD", key="hm"): nav("home")
-    st.markdown("<style>div[data-testid='column']:nth-of-type(8) button { background: #d32f2f !important; }</style>", unsafe_allow_html=True)
+# چوتھی قطار: مکمل ہسٹری اور ہوم (بٹن)
+r4_c1, r4_c2 = st.columns(2)
+with r4_c1: 
+    if st.button("📅 HISTORY", key="btn_hist"): nav("history")
+with r4_c2: 
+    if st.button("🏠 DASHBOARD", key="btn_home"): nav("home")
 
 st.divider()
 
-# 7. پیجز کا ڈیٹا
+# 6. پیجز کا ڈیٹا
 if st.session_state.page == "home":
     st.subheader("📋 آج کی سیل")
     st.dataframe(t_df, use_container_width=True)
