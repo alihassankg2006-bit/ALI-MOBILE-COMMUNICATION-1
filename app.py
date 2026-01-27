@@ -4,117 +4,126 @@ from datetime import datetime
 import os
 
 # 1. ایپ کی بنیادی سیٹنگ
-st.set_page_config(page_title="Ali Mobiles & Communication", layout="wide")
+st.set_page_config(
+    page_title="Ali Mobiles & Communication", 
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
-# 2. وی آئی پی ڈیزائن (CSS) - UPDATED GRID SYSTEM
+# 2. پروفیشنل ڈیزائن CSS
 st.markdown("""
     <style>
-    .block-container { padding: 0.5rem 1rem !important; }
-    .stApp { background-color: #f5f5f5; }
+    /* بیک گراؤنڈ اور بنیادی سیٹنگ */
+    .stApp { background-color: #f8f9fa; }
+    .main > div { padding-top: 1rem; }
     
-    /* برابر باکس کا ڈیزائن */
-    .equal-box {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 15px;
-        height: 110px;
-        margin-bottom: 15px;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15);
-        text-align: center;
-        color: white;
-        font-weight: bold;
-        border: none;
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    .equal-box:hover {
-        transform: translateY(-3px);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2);
-    }
-    
-    /* پرافٹ باکس کے اندر کا ڈیزائن */
-    .box-content {
-        padding: 15px;
+    /* برابر سائز کے باکس */
+    .half-card {
         width: 100%;
-        height: 100%;
+        height: 140px;
+        border-radius: 16px;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        text-align: center;
+        padding: 20px;
+        margin-bottom: 15px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease;
+        color: white;
+        font-family: 'Segoe UI', system-ui, sans-serif;
     }
     
-    .box-label { 
-        font-size: 16px; 
-        font-weight: 700; 
-        text-transform: uppercase; 
-        margin-bottom: 5px;
-        opacity: 0.9;
+    /* ہوور ایفیکٹ */
+    .half-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
     }
-    .box-value { 
-        font-size: 32px; 
-        font-weight: 900; 
+    
+    /* باکس کے اندر کے عناصر */
+    .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 12px;
+        opacity: 0.95;
+    }
+    
+    .card-value {
+        font-size: 38px;
+        font-weight: 800;
         line-height: 1;
+        text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        margin-top: 5px;
+        color: white !important;
+        background: transparent !important;
     }
     
-    /* بٹن والے باکس کے لیے */
-    .button-box {
-        font-size: 22px;
+    /* راؤ کا اسٹائل */
+    .card-row {
         display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 5px;
+        gap: 15px;
+        margin-bottom: 15px;
     }
-    .button-icon { font-size: 28px; }
     
-    /* مخصوص رنگ */
-    .profit-box { 
-        background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
-        border: 3px solid #4caf50;
+    /* ہر باکس کا مخصوص رنگ */
+    .profit-card {
+        background: linear-gradient(145deg, #1e88e5, #0d47a1);
     }
-    .entry-button { 
-        background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%);
-        border: 3px solid #42a5f5;
+    
+    .repair-card {
+        background: linear-gradient(145deg, #43a047, #1b5e20);
     }
-    .repair-box { 
-        background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
-        border: 3px solid #ab47bc;
+    
+    .entry-card {
+        background: linear-gradient(145deg, #ff9800, #e65100);
     }
-    .credit-button { 
-        background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%);
-        border: 3px solid #ef5350;
+    
+    .credit-card {
+        background: linear-gradient(145deg, #9c27b0, #6a1b9a);
     }
-    .banking-box { 
-        background: linear-gradient(135deg, #e65100 0%, #f57c00 100%);
-        border: 3px solid #ff9800;
+    
+    .history-card {
+        background: linear-gradient(145deg, #00bcd4, #006064);
     }
-    .history-button { 
-        background: linear-gradient(135deg, #004d40 0%, #00796b 100%);
-        border: 3px solid #26a69a;
+    
+    .easypaisa-card {
+        background: linear-gradient(145deg, #f44336, #b71c1c);
     }
-    .expense-box { 
-        background: linear-gradient(135deg, #880e4f 0%, #ad1457 100%);
-        border: 3px solid #ec407a;
+    
+    /* لوگو سیکشن */
+    .logo-container {
+        text-align: center;
+        padding: 10px 0;
+        margin-bottom: 20px;
     }
-    .home-button { 
-        background: linear-gradient(135deg, #37474f 0%, #546e7a 100%);
-        border: 3px solid #78909c;
+    
+    /* موبائل ریسپانسیو */
+    @media (max-width: 768px) {
+        .half-card {
+            height: 130px;
+            padding: 15px;
+        }
+        .card-title {
+            font-size: 14px;
+        }
+        .card-value {
+            font-size: 32px;
+        }
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو
-cl1, cl2, cl3 = st.columns([1, 0.5, 1])
-with cl2:
-    if os.path.exists("logo.png"): 
-        st.image("logo.png", use_container_width=True)
-    else:
-        st.markdown("""
-        <div style='text-align:center; background:#f5f5f5; padding:15px; border-radius:10px; border: 2px solid #d32f2f;'>
-            <span style='color:#d32f2f; font-weight:bold; font-size:18px;'>ALI MOBILES & COMMUNICATION</span>
-        </div>
-        """, unsafe_allow_html=True)
+# 3. لوگو سیکشن
+st.markdown("""
+<div class="logo-container">
+    <h2 style="color: #1b5e20; margin-bottom: 5px; font-weight: 800;">ALI MOBILES & COMMUNICATION</h2>
+    <p style="color: #666; font-size: 14px; margin-top: 0;">Premium Shop Management System</p>
+</div>
+""", unsafe_allow_html=True)
 
 # 4. ڈیٹا لوڈنگ
 DATA_FILE = "ali_shop_split_v13.csv"
@@ -126,262 +135,238 @@ def load_data():
     return pd.DataFrame(columns=["تاریخ", "کیٹیگری", "تفصیل", "خریداری", "فروخت", "منافع", "اسٹیٹس"])
 
 df = load_data()
-if 'page' not in st.session_state: st.session_state.page = "home"
-def nav(p): st.session_state.page = p
+if 'page' not in st.session_state: 
+    st.session_state.page = "home"
+
+def nav(p): 
+    st.session_state.page = p
 
 # 5. ڈیٹا کیلکولیشن
 today = datetime.now().date()
-t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
-cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
-he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
-ut = t_df[t_df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
-rep = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
-bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
+t_df = df[df['تاریخ'].dt.date == today] if not df.empty else pd.DataFrame()
 
-# 6. 4 قطاریں - ہر قطار میں 2 برابر باکس
-# سبھی باکس ایک ہی سائز کے ہوں گے
+# حساب کتاب
+total_profit = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
+repair_profit = t_df[t_df['کیٹیگری'] == "Repairing"]['منافع'].sum()
+easypaisa_sales = t_df[t_df['کیٹیگری'] == "Banking"]['فروخت'].sum()
+home_expense = t_df[t_df['کیٹیگری'] == "Home Expense"]['فروخت'].sum()
+total_credit = df[df['اسٹیٹس'] == "ادھار"]['فروخت'].sum()
+total_history = len(df)
 
-# Row 1: کل نقد پرافٹ | ENTRY
+# 6. ڈیش بورڈ لے آؤٹ - 3 قطاریں، ہر قطار میں 2 برابر کے باکس
+
+# پہلی قطار: پرافٹ اور ریپیرنگ
 row1_col1, row1_col2 = st.columns(2)
 
 with row1_col1:
-    # پرافٹ باکس
     st.markdown(f"""
-    <div class='equal-box profit-box'>
-        <div class='box-content'>
-            <div class='box-label'>کل نقد پرافٹ</div>
-            <div class='box-value'>{cp}</div>
-        </div>
+    <div class="half-card profit-card" onclick="window.dashboardClick('profit')">
+        <div class="card-title">کل نقد پرافٹ</div>
+        <div class="card-value">{total_profit}</div>
     </div>
     """, unsafe_allow_html=True)
+    if st.button("", key="profit_btn", help="کل نقد پرافٹ"):
+        nav("profit_details")
 
 with row1_col2:
-    # انٹری بٹن باکس
-    if st.button("", key="entry_box"):
-        nav("new")
-    # CSS کے ذریعے بٹن کو باکس کی شکل دینا
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(2) button {
-        background: linear-gradient(135deg, #0d47a1 0%, #1976d2 100%) !important;
-        color: white !important;
-        height: 110px !important;
-        width: 100% !important;
-        border-radius: 15px !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        border: 3px solid #42a5f5 !important;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15) !important;
-        margin-bottom: 15px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 5px !important;
-    }
-    div[data-testid="column"]:nth-of-type(2) button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2) !important;
-    }
-    div[data-testid="column"]:nth-of-type(2) button:before {
-        content: "➕";
-        font-size: 28px;
-    }
-    div[data-testid="column"]:nth-of-type(2) button:after {
-        content: "ENTRY";
-        font-size: 22px;
-    }
-    </style>
+    st.markdown(f"""
+    <div class="half-card repair-card" onclick="window.dashboardClick('repair')">
+        <div class="card-title">ریپیرنگ پرافٹ</div>
+        <div class="card-value">{repair_profit}</div>
+    </div>
     """, unsafe_allow_html=True)
+    if st.button("", key="repair_btn", help="ریپیرنگ پرافٹ"):
+        nav("repair_details")
 
-# Row 2: ریپیرنگ پرافٹ | CREDIT
+# دوسری قطار: انٹری اور کریڈٹ
 row2_col1, row2_col2 = st.columns(2)
 
 with row2_col1:
-    # ریپیرنگ پرافٹ باکس
     st.markdown(f"""
-    <div class='equal-box repair-box'>
-        <div class='box-content'>
-            <div class='box-label'>ریپیرنگ پرافٹ</div>
-            <div class='box-value'>{rep}</div>
-        </div>
+    <div class="half-card entry-card" onclick="window.dashboardClick('entry')">
+        <div class="card-title">نیا انٹری</div>
+        <div class="card-value">+</div>
     </div>
     """, unsafe_allow_html=True)
+    if st.button("", key="entry_btn", help="نیا انٹری شامل کریں"):
+        nav("new")
 
 with row2_col2:
-    # کریڈٹ بٹن باکس
-    if st.button("", key="credit_box"):
-        nav("credit")
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(4) button {
-        background: linear-gradient(135deg, #b71c1c 0%, #d32f2f 100%) !important;
-        color: white !important;
-        height: 110px !important;
-        width: 100% !important;
-        border-radius: 15px !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        border: 3px solid #ef5350 !important;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15) !important;
-        margin-bottom: 15px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 5px !important;
-    }
-    div[data-testid="column"]:nth-of-type(4) button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2) !important;
-    }
-    div[data-testid="column"]:nth-of-type(4) button:before {
-        content: "📓";
-        font-size: 28px;
-    }
-    div[data-testid="column"]:nth-of-type(4) button:after {
-        content: "CREDIT";
-        font-size: 22px;
-    }
-    </style>
+    st.markdown(f"""
+    <div class="half-card credit-card" onclick="window.dashboardClick('credit')">
+        <div class="card-title">کل کریڈٹ</div>
+        <div class="card-value">{total_credit}</div>
+    </div>
     """, unsafe_allow_html=True)
+    if st.button("", key="credit_btn", help="کریڈٹ کی تفصیلات"):
+        nav("credit")
 
-# Row 3: ایزی پیسہ سیل | HISTORY
+# تیسری قطار: ہسٹری اور ایزی پیسہ
 row3_col1, row3_col2 = st.columns(2)
 
 with row3_col1:
-    # بینکنگ باکس
     st.markdown(f"""
-    <div class='equal-box banking-box'>
-        <div class='box-content'>
-            <div class='box-label'>ایزی پیسہ سیل</div>
-            <div class='box-value'>{bank}</div>
-        </div>
+    <div class="half-card history-card" onclick="window.dashboardClick('history')">
+        <div class="card-title">ٹوٹل ہسٹری</div>
+        <div class="card-value">{total_history}</div>
     </div>
     """, unsafe_allow_html=True)
+    if st.button("", key="history_btn", help="مکمل ریکارڈ"):
+        nav("history")
 
 with row3_col2:
-    # ہسٹری بٹن باکس
-    if st.button("", key="history_box"):
-        nav("history")
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(6) button {
-        background: linear-gradient(135deg, #004d40 0%, #00796b 100%) !important;
-        color: white !important;
-        height: 110px !important;
-        width: 100% !important;
-        border-radius: 15px !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        border: 3px solid #26a69a !important;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15) !important;
-        margin-bottom: 15px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 5px !important;
-    }
-    div[data-testid="column"]:nth-of-type(6) button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2) !important;
-    }
-    div[data-testid="column"]:nth-of-type(6) button:before {
-        content: "📅";
-        font-size: 28px;
-    }
-    div[data-testid="column"]:nth-of-type(6) button:after {
-        content: "HISTORY";
-        font-size: 22px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-
-# Row 4: گھر کا خرچ | HOME
-row4_col1, row4_col2 = st.columns(2)
-
-with row4_col1:
-    # خرچ باکس
     st.markdown(f"""
-    <div class='equal-box expense-box'>
-        <div class='box-content'>
-            <div class='box-label'>گھر کا خرچ</div>
-            <div class='box-value'>{he}</div>
-        </div>
+    <div class="half-card easypaisa-card" onclick="window.dashboardClick('easypaisa')">
+        <div class="card-title">ایزی پیسہ سیل</div>
+        <div class="card-value">{easypaisa_sales}</div>
     </div>
     """, unsafe_allow_html=True)
+    if st.button("", key="easypaisa_btn", help="ایزی پیسہ سیلز"):
+        nav("easypaisa_details")
 
-with row4_col2:
-    # ہوم بٹن باکس
-    if st.button("", key="home_box"):
-        nav("home")
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(8) button {
-        background: linear-gradient(135deg, #37474f 0%, #546e7a 100%) !important;
-        color: white !important;
-        height: 110px !important;
-        width: 100% !important;
-        border-radius: 15px !important;
-        font-size: 22px !important;
-        font-weight: bold !important;
-        border: 3px solid #78909c !important;
-        box-shadow: 0px 6px 15px rgba(0,0,0,0.15) !important;
-        margin-bottom: 15px !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 5px !important;
-    }
-    div[data-testid="column"]:nth-of-type(8) button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2) !important;
-    }
-    div[data-testid="column"]:nth-of-type(8) button:before {
-        content: "🏠";
-        font-size: 28px;
-    }
-    div[data-testid="column"]:nth-of-type(8) button:after {
-        content: "HOME";
-        font-size: 22px;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# JavaScript for click handling
+st.markdown("""
+<script>
+window.dashboardClick = function(type) {
+    // یہاں آپ کلک ہینڈلنگ کا کوڈ شامل کر سکتے ہیں
+    console.log('Card clicked:', type);
+}
+</script>
+""", unsafe_allow_html=True)
 
 st.divider()
 
 # 7. پیجز کا ڈیٹا
-if st.session_state.page == "home":
-    st.subheader("📋 آج کی سیل")
-    st.dataframe(t_df, use_container_width=True)
+if st.session_state.page == "home" or st.session_state.page == "profit_details":
+    st.subheader("📊 آج کی کارکردگی")
+    if not t_df.empty:
+        st.dataframe(t_df, use_container_width=True, 
+                    column_config={
+                        "تاریخ": st.column_config.DatetimeColumn(format="DD-MM-YYYY HH:mm"),
+                        "منافع": st.column_config.NumberColumn(format="%d")
+                    })
+    else:
+        st.info("آج کے لیے کوئی ڈیٹا موجود نہیں ہے۔")
 
 elif st.session_state.page == "new":
-    st.subheader("📝 نئی انٹری")
-    with st.form("vip_f"):
-        cat = st.selectbox("کیٹیگری", ["Accessories", "Repairing", "Banking", "Home Expense"])
-        det = st.text_input("تفصیل")
-        pay = st.radio("ادائیگی", ["نقد", "ادھار"], horizontal=True) if cat != "Home Expense" else "نقد"
-        cx, sx = st.columns(2)
-        cost = cx.number_input("لاگت", min_value=0)
-        sale = sx.number_input("وصولی", min_value=0)
-        if st.form_submit_button("محفوظ کریں"):
-            p = 0 if cat == "Home Expense" else (sale - cost)
-            nr = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": cost, "فروخت": sale, "منافع": p, "اسٹیٹس": pay}
-            df = pd.concat([df, pd.DataFrame([nr])], ignore_index=True)
+    st.subheader("📝 نیا ریکارڈ شامل کریں")
+    with st.form("new_record_form", clear_on_submit=True):
+        category = st.selectbox("کیٹیگری منتخب کریں", 
+                              ["Accessories", "Repairing", "Banking", "Home Expense"])
+        description = st.text_input("تفصیل درج کریں")
+        
+        if category != "Home Expense":
+            payment_type = st.radio("ادائیگی کی قسم", ["نقد", "ادھار"], horizontal=True)
+        else:
+            payment_type = "نقد"
+            
+        col1, col2 = st.columns(2)
+        with col1:
+            cost = st.number_input("لاگت (Cost)", min_value=0, step=100)
+        with col2:
+            sale = st.number_input("فروخت (Sale)", min_value=0, step=100)
+            
+        submitted = st.form_submit_button("💾 ریکارڈ محفوظ کریں")
+        
+        if submitted:
+            if category == "Home Expense":
+                profit = 0
+            else:
+                profit = sale - cost
+                
+            new_record = {
+                "تاریخ": datetime.now(),
+                "کیٹیگری": category,
+                "تفصیل": description,
+                "خریداری": cost,
+                "فروخت": sale,
+                "منافع": profit,
+                "اسٹیٹس": payment_type
+            }
+            
+            df = pd.concat([df, pd.DataFrame([new_record])], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
-            st.success("محفوظ ہو گیا!"); st.rerun()
+            st.success("✅ ریکارڈ کامیابی سے محفوظ ہو گیا!")
+            st.balloons()
+            st.rerun()
 
 elif st.session_state.page == "credit":
-    st.subheader("📓 ادھار لسٹ")
-    cl = df[df['اسٹیٹس'] == "ادھار"]
-    if not cl.empty:
-        st.table(cl[["تاریخ", "تفصیل", "فروخت"]])
-        st.info(f"کل ادھار: {cl['فروخت'].sum()}")
+    st.subheader("📋 کریڈٹ ریکارڈز")
+    credit_df = df[df['اسٹیٹس'] == "ادھار"]
+    
+    if not credit_df.empty:
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            st.dataframe(credit_df[["تاریخ", "کیٹیگری", "تفصیل", "فروخت"]], 
+                        use_container_width=True)
+        with col2:
+            st.metric("کل واجب الادا", f"₹{total_credit}")
+            
+        # کریڈٹ کلیئر کرنے کا آپشن
+        with st.expander("کریڈٹ کلیئر کریں"):
+            clear_desc = st.text_input("تفصیل")
+            clear_amount = st.number_input("رقم", min_value=0, step=100)
+            if st.button("کریڈٹ کلیئر کریں"):
+                st.success("کریڈٹ کلیئر کر دیا گیا")
     else:
-        st.info("کوئی ادھار نہیں")
+        st.success("🎉 تمام کریڈٹ کلیئر ہیں!")
 
 elif st.session_state.page == "history":
-    st.subheader("📅 مکمل ریکارڈ")
-    st.dataframe(df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
+    st.subheader("📜 مکمل کاروباری ریکارڈ")
+    
+    # فلٹرز
+    col1, col2 = st.columns(2)
+    with col1:
+        start_date = st.date_input("شروع کی تاریخ", datetime.now().date())
+    with col2:
+        end_date = st.date_input("اختتام کی تاریخ", datetime.now().date())
+    
+    # فلٹرڈ ڈیٹا
+    filtered_df = df[
+        (df['تاریخ'].dt.date >= start_date) & 
+        (df['تاریخ'].dt.date <= end_date)
+    ]
+    
+    if not filtered_df.empty:
+        # سمری میٹرکس
+        st.metric("کل انٹریز", len(filtered_df))
+        
+        # ڈیٹا ٹیبل
+        st.dataframe(
+            filtered_df.sort_values(by="تاریخ", ascending=False),
+            use_container_width=True,
+            column_config={
+                "تاریخ": st.column_config.DatetimeColumn(format="DD-MM-YYYY"),
+                "منافع": st.column_config.NumberColumn(format="₹%d")
+            }
+        )
+        
+        # ایکسپورٹ کا آپشن
+        csv = filtered_df.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="📥 ڈیٹا ڈاؤن لوڈ کریں",
+            data=csv,
+            file_name=f"business_record_{datetime.now().strftime('%Y%m%d')}.csv",
+            mime="text/csv"
+        )
+    else:
+        st.info("منتخب تاریخوں کے لیے کوئی ڈیٹا موجود نہیں ہے۔")
+
+elif st.session_state.page == "easypaisa_details":
+    st.subheader("💰 ایزی پیسہ ٹرانزیکشنز")
+    easypaisa_df = df[df['کیٹیگری'] == "Banking"]
+    
+    if not easypaisa_df.empty:
+        st.dataframe(easypaisa_df, use_container_width=True)
+        st.metric("کل ایزی پیسہ سیلز", f"₹{easypaisa_sales}")
+    else:
+        st.info("ایزی پیسہ کا کوئی ریکارڈ موجود نہیں ہے۔")
+
+# فوٹر
+st.markdown("---")
+st.markdown(
+    "<p style='text-align: center; color: #666; font-size: 12px;'>"
+    "© 2024 Ali Mobiles & Communication | Premium Shop Management System"
+    "</p>",
+    unsafe_allow_html=True
+)
