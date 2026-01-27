@@ -6,78 +6,61 @@ import os
 # 1. ایپ کی بنیادی سیٹنگ
 st.set_page_config(page_title="Ali Mobiles & Communication", layout="wide")
 
-# 2. وی آئی پی سپلٹ ڈیزائن (CSS) - UPDATED
+# 2. پروفیشنل ہاف-ہاف ڈیزائن (CSS)
 st.markdown("""
     <style>
-    .block-container { padding: 0.5rem 1rem !important; }
-    .stApp { background-color: #ffffff; }
+    .block-container { padding: 0.5rem 0.5rem !important; }
+    .stApp { background-color: #f8f9fa; }
     
-    /* سپلٹ کارڈ ڈیزائن - UPDATED */
-    .split-card {
+    /* میٹرک کارڈ (Left Side) */
+    .metric-half {
+        height: 100px;
         display: flex;
-        align-items: center;
-        justify-content: space-between;
-        color: white !important;
-        border-radius: 12px;
-        margin-bottom: 10px;
-        height: 90px;
-        overflow: hidden;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-    }
-    .card-content {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         flex-direction: column;
-    }
-    
-    .m-label { font-size: 14px; font-weight: bold; opacity: 0.9; text-transform: uppercase; }
-    .m-val { font-size: 28px; font-weight: 900; margin-top: 5px; }
-
-    /* بٹنوں کا ڈیزائن - UPDATED */
-    .button-card {
-        display: flex;
         align-items: center;
         justify-content: center;
-        height: 90px;
-        border-radius: 12px;
-        font-size: 18px;
-        font-weight: bold;
+        border-radius: 15px 0px 0px 15px; /* صرف بائیں طرف سے گول */
         color: white !important;
-        margin-bottom: 10px;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-        cursor: pointer;
+        box-shadow: -2px 4px 10px rgba(0,0,0,0.1);
+        text-align: center;
     }
-    .button-card:hover { opacity: 0.9; }
+    .m-label { font-size: 12px; font-weight: bold; opacity: 0.9; text-transform: uppercase; }
+    .m-val { font-size: 26px; font-weight: 900; }
+
+    /* اسٹریم لٹ بٹن کو کارڈ کے ساتھ جوڑنا (Right Side) */
+    .stButton > button {
+        height: 100px !important;
+        width: 100% !important;
+        border-radius: 0px 15px 15px 0px !important; /* صرف دائیں طرف سے گول */
+        font-size: 18px !important;
+        font-weight: bold !important;
+        color: white !important;
+        border: none !important;
+        box-shadow: 2px 4px 10px rgba(0,0,0,0.1) !important;
+        margin-left: -1px !important; /* بالکل اٹیچ کرنے کے لیے */
+    }
+
+    /* رنگوں کی سیٹنگ */
+    .bg-green { background: linear-gradient(135deg, #1b5e20, #2e7d32); }
+    .bg-purple { background: linear-gradient(135deg, #4a148c, #6a1b9a); }
+    .bg-orange { background: linear-gradient(135deg, #e65100, #f57c00); }
+    .bg-red { background: linear-gradient(135deg, #b71c1c, #d32f2f); }
     
-    /* مخصوص رنگ */
-    .row-green { background: #1b5e20; } /* Profit */
-    .row-green-light { background: #2e7d32; } /* Entry Button */
-    .row-purple { background: #4a148c; } /* Repairing */
-    .row-purple-light { background: #6a1b9a; } /* Credit Button */
-    .row-orange { background: #e65100; } /* Banking */
-    .row-orange-light { background: #f57c00; } /* History Button */
-    .row-red { background: #b71c1c; }    /* Expense */
-    .row-red-light { background: #d32f2f; } /* Home Button */
+    /* بٹن ہوور ایفیکٹ */
+    .stButton > button:hover { opacity: 0.9; transform: scale(0.98); }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو
-cl1, cl2, cl3 = st.columns([1, 0.5, 1])
+# 3. لوگو سیکشن
+cl1, cl2, cl3 = st.columns([1, 0.4, 1])
 with cl2:
     if os.path.exists("logo.png"): 
         st.image("logo.png", use_container_width=True)
     else:
-        st.markdown("""
-        <div style='text-align:center; background:#f5f5f5; padding:10px; border-radius:10px;'>
-            <span style='color:#b71c1c; font-weight:bold; font-size:16px;'>ALI MOBILES</span>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; color:#b71c1c; font-weight:bold;'>ALI MOBILES</div>", unsafe_allow_html=True)
 
-# 4. ڈیٹا لوڈنگ
-DATA_FILE = "ali_shop_split_v13.csv"
+# 4. ڈیٹا ہینڈلنگ
+DATA_FILE = "ali_shop_v15_final.csv"
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
@@ -87,167 +70,63 @@ def load_data():
 
 df = load_data()
 if 'page' not in st.session_state: st.session_state.page = "home"
-def nav(p): st.session_state.page = p
+def nav(p):
+    st.session_state.page = p
+    st.rerun()
 
-# 5. ڈیٹا کیلکولیشن
+# 5. حساب کتاب
 today = datetime.now().date()
 t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
 cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
 he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
-ut = t_df[t_df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
+ut = t_df[df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
 rep = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
 bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
 
-# 6. 4 قطاریں برابر چوڑائی میں - UPDATED LAYOUT
-# ہر قطار میں دو برابر کالم
+# 6. ہاف-ہاف گرڈ (4 Rows)
 
-# Row 1: کل نقد پرافٹ | ENTRY
-row1_col1, row1_col2 = st.columns(2)
-with row1_col1:
-    st.markdown(f"""
-    <div class='split-card row-green'>
-        <div class='card-content'>
-            <div class='m-label'>کل نقد پرافٹ</div>
-            <div class='m-val'>{cp}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-with row1_col2:
-    if st.button("➕ ENTRY", key="e"):
-        nav("new")
-    # CSS کے ذریعے بٹن کو کارڈ کی شکل دینا
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(2) button {
-        background: #2e7d32 !important;
-        color: white !important;
-        height: 90px !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        border: none !important;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
-        margin-bottom: 10px !important;
-    }
-    div[data-testid="column"]:nth-of-type(2) button:hover {
-        background: #1b5e20 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Row 1: نقد پرافٹ | ENTRY (GREEN)
+c1_m, c1_b = st.columns(2)
+with c1_m:
+    st.markdown(f"<div class='metric-half bg-green'><div class='m-label'>کل نقد پرافٹ</div><div class='m-val'>{cp}</div></div>", unsafe_allow_html=True)
+with c1_b:
+    if st.button("➕ NEW ENTRY", key="e"): nav("new")
+    st.markdown("<style>div[data-testid='column']:nth-of-type(2) button { background: #2e7d32 !important; }</style>", unsafe_allow_html=True)
 
-# Row 2: ریپیرنگ پرافٹ | CREDIT
-row2_col1, row2_col2 = st.columns(2)
-with row2_col1:
-    st.markdown(f"""
-    <div class='split-card row-purple'>
-        <div class='card-content'>
-            <div class='m-label'>ریپیرنگ پرافٹ</div>
-            <div class='m-val'>{rep}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-with row2_col2:
-    if st.button("📓 CREDIT", key="c"):
-        nav("credit")
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(4) button {
-        background: #6a1b9a !important;
-        color: white !important;
-        height: 90px !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        border: none !important;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
-        margin-bottom: 10px !important;
-    }
-    div[data-testid="column"]:nth-of-type(4) button:hover {
-        background: #4a148c !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Row 2: ریپیرنگ | CREDIT (PURPLE)
+c2_m, c2_b = st.columns(2)
+with c2_m:
+    st.markdown(f"<div class='metric-half bg-purple'><div class='m-label'>ریپیرنگ پرافٹ</div><div class='m-val'>{rep}</div></div>", unsafe_allow_html=True)
+with c2_b:
+    if st.button("📓 CREDIT LIST", key="c"): nav("credit")
+    st.markdown("<style>div[data-testid='column']:nth-of-type(4) button { background: #6a1b9a !important; }</style>", unsafe_allow_html=True)
 
-# Row 3: ایزی پیسہ سیل | HISTORY
-row3_col1, row3_col2 = st.columns(2)
-with row3_col1:
-    st.markdown(f"""
-    <div class='split-card row-orange'>
-        <div class='card-content'>
-            <div class='m-label'>ایزی پیسہ سیل</div>
-            <div class='m-val'>{bank}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-with row3_col2:
-    if st.button("📅 HISTORY", key="h"):
-        nav("history")
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(6) button {
-        background: #f57c00 !important;
-        color: white !important;
-        height: 90px !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        border: none !important;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
-        margin-bottom: 10px !important;
-    }
-    div[data-testid="column"]:nth-of-type(6) button:hover {
-        background: #e65100 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Row 3: ایزی پیسہ | HISTORY (ORANGE)
+c3_m, c3_b = st.columns(2)
+with c3_m:
+    st.markdown(f"<div class='metric-half bg-orange'><div class='m-label'>ایزی پیسہ سیل</div><div class='m-val'>{bank}</div></div>", unsafe_allow_html=True)
+with c3_b:
+    if st.button("📅 FULL HISTORY", key="h"): nav("history")
+    st.markdown("<style>div[data-testid='column']:nth-of-type(6) button { background: #f57c00 !important; }</style>", unsafe_allow_html=True)
 
-# Row 4: گھر کا خرچ | HOME
-row4_col1, row4_col2 = st.columns(2)
-with row4_col1:
-    st.markdown(f"""
-    <div class='split-card row-red'>
-        <div class='card-content'>
-            <div class='m-label'>گھر کا خرچ</div>
-            <div class='m-val'>{he}</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-with row4_col2:
-    if st.button("🏠 HOME", key="hm"):
-        nav("home")
-    st.markdown("""
-    <style>
-    div[data-testid="column"]:nth-of-type(8) button {
-        background: #d32f2f !important;
-        color: white !important;
-        height: 90px !important;
-        width: 100% !important;
-        border-radius: 12px !important;
-        font-size: 18px !important;
-        font-weight: bold !important;
-        border: none !important;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
-        margin-bottom: 10px !important;
-    }
-    div[data-testid="column"]:nth-of-type(8) button:hover {
-        background: #b71c1c !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+# Row 4: گھر کا خرچ | HOME (RED)
+c4_m, c4_b = st.columns(2)
+with c4_m:
+    st.markdown(f"<div class='metric-half bg-red'><div class='m-label'>گھر کا خرچ</div><div class='m-val'>{he}</div></div>", unsafe_allow_html=True)
+with c4_b:
+    if st.button("🏠 DASHBOARD", key="hm"): nav("home")
+    st.markdown("<style>div[data-testid='column']:nth-of-type(8) button { background: #d32f2f !important; }</style>", unsafe_allow_html=True)
 
 st.divider()
 
-# 7. پیجز کا ڈیٹا (یہ وہی رہے گا)
+# 7. پیجز کا ڈیٹا
 if st.session_state.page == "home":
     st.subheader("📋 آج کی سیل")
     st.dataframe(t_df, use_container_width=True)
 
 elif st.session_state.page == "new":
     st.subheader("📝 نئی انٹری")
-    with st.form("vip_f"):
+    with st.form("vip_form"):
         cat = st.selectbox("کیٹیگری", ["Accessories", "Repairing", "Banking", "Home Expense"])
         det = st.text_input("تفصیل")
         pay = st.radio("ادائیگی", ["نقد", "ادھار"], horizontal=True) if cat != "Home Expense" else "نقد"
@@ -259,17 +138,15 @@ elif st.session_state.page == "new":
             nr = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": cost, "فروخت": sale, "منافع": p, "اسٹیٹس": pay}
             df = pd.concat([df, pd.DataFrame([nr])], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
-            st.success("محفوظ ہو گیا!"); st.rerun()
+            st.success("ریکارڈ محفوظ!")
+            nav("home")
 
 elif st.session_state.page == "credit":
     st.subheader("📓 ادھار لسٹ")
     cl = df[df['اسٹیٹس'] == "ادھار"]
-    if not cl.empty:
-        st.table(cl[["تاریخ", "تفصیل", "فروخت"]])
-        st.info(f"کل ادھار: {cl['فروخت'].sum()}")
-    else:
-        st.info("کوئی ادھار نہیں")
+    st.table(cl[["تاریخ", "تفصیل", "فروخت"]]) if not cl.empty else st.info("کوئی ادھار نہیں")
 
 elif st.session_state.page == "history":
     st.subheader("📅 مکمل ریکارڈ")
     st.dataframe(df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
+    
