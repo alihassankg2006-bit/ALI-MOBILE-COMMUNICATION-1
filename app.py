@@ -12,6 +12,25 @@ st.markdown("""
     .block-container { padding: 0.5rem 0.5rem !important; }
     .stApp { background-color: #ffffff; }
     
+    /* لوگو کنٹینر */
+    .logo-container {
+        text-align: center;
+        margin-bottom: 25px;
+        padding: 10px;
+    }
+    .shop-title {
+        color: #1b5e20;
+        font-weight: 800;
+        font-size: 28px;
+        margin-bottom: 5px;
+        letter-spacing: 0.5px;
+    }
+    .shop-subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-top: 0;
+    }
+    
     /* میٹرک ڈبوں کا ڈیزائن (تمام 8 ڈبے) */
     .big-tile {
         height: 140px; 
@@ -107,6 +126,9 @@ st.markdown("""
 
     /* ریسپانسیو ڈیزائن */
     @media (max-width: 768px) {
+        .shop-title {
+            font-size: 22px;
+        }
         .big-tile {
             height: 120px;
             border-radius: 15px;
@@ -127,13 +149,25 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو (صرف اگر فائل موجود ہو)
-st.markdown("""
-<div style="text-align: center; margin-bottom: 20px;">
-    <h2 style="color: #1b5e20; margin-bottom: 5px; font-weight: 800;">ALI MOBILES & COMMUNICATION</h2>
-    <p style="color: #666; font-size: 14px; margin-top: 0;">Premium Shop Management System</p>
-</div>
-""", unsafe_allow_html=True)
+# 3. لوگو سیکشن - UPDATED (آپ کا اصل لوگو)
+st.markdown('<div class="logo-container">', unsafe_allow_html=True)
+
+# لوگو کی تصویر دکھائیں اگر موجود ہو
+col1, col2, col3 = st.columns([1, 2, 1])
+with col2:
+    if os.path.exists("logo.png"):
+        # آپ کا اصل لوگو تصویر
+        st.image("logo.png", use_container_width=True)
+    else:
+        # اگر لوگو فائل نہ ہو تو متبادل
+        st.markdown("""
+        <div style="text-align: center;">
+            <h2 class="shop-title">ALI MOBILES & COMMUNICATION</h2>
+            <p class="shop-subtitle">Premium Shop Management System</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+st.markdown('</div>', unsafe_allow_html=True)
 
 # 4. ڈیٹا ہینڈلنگ
 DATA_FILE = "ali_shop_v20_final.csv"
