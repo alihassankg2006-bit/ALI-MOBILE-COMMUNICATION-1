@@ -31,7 +31,15 @@ st.markdown("""
         margin-top: 0;
     }
     
-    /* میٹرک ڈبوں کا ڈیزائن (تمام 8 ڈبے) */
+    /* بٹن کنٹینر */
+    .tile-container {
+        position: relative;
+        margin-bottom: 15px;
+        border-radius: 20px;
+        overflow: visible !important;
+    }
+    
+    /* بڑے ڈبوں کا ڈیزائن */
     .big-tile {
         height: 140px; 
         border-radius: 20px;
@@ -42,39 +50,14 @@ st.markdown("""
         text-align: center;
         color: white !important;
         box-shadow: 0px 8px 15px rgba(0,0,0,0.2);
-        margin-bottom: 15px;
         transition: transform 0.2s, box-shadow 0.2s;
         font-family: 'Segoe UI', system-ui, sans-serif;
         position: relative;
-        overflow: hidden;
+        z-index: 1;
     }
     .big-tile:hover {
         transform: translateY(-5px);
         box-shadow: 0px 12px 20px rgba(0,0,0,0.25);
-    }
-    
-    /* بٹن کے اندر کا ٹیکسٹ سٹائل */
-    .big-tile button {
-        background: transparent !important;
-        border: none !important;
-        width: 100% !important;
-        height: 100% !important;
-        color: white !important;
-        font-family: inherit !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        cursor: pointer !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-    }
-    .big-tile button:hover {
-        background: transparent !important;
-    }
-    .big-tile button:focus {
-        outline: none !important;
-        box-shadow: none !important;
     }
     
     /* ڈبے کے اندر کے عناصر */
@@ -148,18 +131,25 @@ st.markdown("""
         border: 2px solid #78909c;
     }
 
-    /* چھوٹے بٹنوں کو چھپانے کے لیے */
-    .hidden-button {
-        display: none !important;
+    /* خفیہ بٹن جو پورے ٹائل کو کور کرے */
+    .tile-button {
+        position: absolute !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+        opacity: 0 !important;
+        z-index: 2 !important;
+        cursor: pointer !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
     }
     
-    /* بٹن کے اندر کے ٹیکسٹ کے لیے */
-    .button-content {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        height: 100%;
+    /* بٹن کنٹینر کے لیے ہوور افیکٹ */
+    .tile-container:hover .big-tile {
+        transform: translateY(-5px);
+        box-shadow: 0px 12px 20px rgba(0,0,0,0.25);
     }
 
     /* ریسپانسیو ڈیزائن */
@@ -183,6 +173,11 @@ st.markdown("""
         .tile-button-text {
             font-size: 14px;
         }
+    }
+    
+    /* عام بٹنز کو چھپانے کے لیے */
+    .stButton > button:not(.tile-button) {
+        visibility: visible;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -222,64 +217,65 @@ if 'page' not in st.session_state:
 # 6. حساب کتاب
 today = datetime.now().date()
 t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
-cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
-rep = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
-he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
-bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
+cp = int(t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum())
+rep = int(t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum())
+he = int(t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum())
+bank = int(t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum())
 
-# 7. بڑے بٹنز بنانے کا فنکشن
-def create_big_button(column, color_class, icon_or_data, text, page_key, is_data=False):
+# 7. بڑے بٹن بنانے کا فنکشن
+def create_tile_button(column, color_class, content, title, page_key, is_data=False):
     with column:
+        # HTML for the visual tile
         if is_data:
-            # ڈیٹا والے بٹن (پرافٹ، خرچہ وغیرہ)
-            button_html = f"""
-            <div class='big-tile {color_class}'>
-                <div class='button-content'>
-                    <div class='tile-name'>{text}</div>
-                    <div class='tile-data'>{icon_or_data}</div>
+            tile_html = f"""
+            <div class='tile-container'>
+                <div class='big-tile {color_class}'>
+                    <div class='tile-name'>{title}</div>
+                    <div class='tile-data'>{content}</div>
                 </div>
             </div>
             """
         else:
-            # آئیکن والے بٹن (انٹری، ہسٹری وغیرہ)
-            button_html = f"""
-            <div class='big-tile {color_class}'>
-                <div class='button-content'>
-                    <div class='tile-icon'>{icon_or_data}</div>
-                    <div class='tile-button-text'>{text}</div>
+            tile_html = f"""
+            <div class='tile-container'>
+                <div class='big-tile {color_class}'>
+                    <div class='tile-icon'>{content}</div>
+                    <div class='tile-button-text'>{title}</div>
                 </div>
             </div>
             """
         
-        # HTML دکھائیں
-        st.markdown(button_html, unsafe_allow_html=True)
+        # Display the tile
+        st.markdown(tile_html, unsafe_allow_html=True)
         
-        # اس کے نیچے خفیہ بٹن
-        if st.button("", key=f"btn_{page_key}", help=text):
-            st.session_state.page = page_key
-            st.rerun()
+        # Create a full-size invisible button over the tile
+        col1, col2, col3 = st.columns([1, 2, 1])
+        with col2:
+            if st.button(" ", key=f"btn_{page_key}", help=title.replace("<br>", " ").replace("<small>", "").replace("</small>", "")):
+                st.session_state.page = page_key
+                st.rerun()
 
-# 8. بڑے بٹنز کی قطاریں
+# 8. بڑے بٹنز کی قطاریں - COMPACT LAYOUT
 
 # پہلی قطار: انٹری اور پرافٹ
 r1_c1, r1_c2 = st.columns(2)
-create_big_button(r1_c1, "bg-purple", "➕", "نئی انٹری<br><small>(NEW ENTRY)</small>", "new")
-create_big_button(r1_c2, "bg-green", cp, "کل نقد پرافٹ", "profit_details", is_data=True)
+create_tile_button(r1_c1, "bg-purple", "➕", "نئی انٹری<br><small>(NEW ENTRY)</small>", "new")
+create_tile_button(r1_c2, "bg-green", f"{cp}", "کل نقد پرافٹ", "profit_details", is_data=True)
 
 # دوسری قطار: ریپیرنگ اور کریڈٹ
 r2_c1, r2_c2 = st.columns(2)
-create_big_button(r2_c1, "bg-blue", rep, "ریپیرنگ پرافٹ", "repair_details", is_data=True)
-create_big_button(r2_c2, "bg-teal", "📓", "ادھار لسٹ<br><small>(CREDIT LIST)</small>", "credit")
+create_tile_button(r2_c1, "bg-blue", f"{rep}", "ریپیرنگ پرافٹ", "repair_details", is_data=True)
+create_tile_button(r2_c2, "bg-teal", "📓", "ادھار لسٹ<br><small>(CREDIT LIST)</small>", "credit")
 
 # تیسری قطار: ایزی پیسہ اور ہسٹری
 r3_c1, r3_c2 = st.columns(2)
-create_big_button(r3_c1, "bg-orange", bank, "ایزی پیسہ سیل", "banking_details", is_data=True)
-create_big_button(r3_c2, "bg-pink", "📅", "مکمل ہسٹری<br><small>(HISTORY)</small>", "history")
+create_tile_button(r3_c1, "bg-orange", f"{bank}", "ایزی پیسہ سیل", "banking_details", is_data=True)
+create_tile_button(r3_c2, "bg-pink", "📅", "مکمل ہسٹری<br><small>(HISTORY)</small>", "history")
 
 # چوتھی قطار: گھر کا خرچ اور ہوم
 r4_c1, r4_c2 = st.columns(2)
-create_big_button(r4_c1, "bg-red", he, "گھر کا خرچ", "expense_details", is_data=True)
-create_big_button(r4_c2, "bg-slate", "🏠", "ہوم پیج<br><small>(HOME)</small>", "home")
+create_tile_button(r4_c1, "bg-red", f"{he}", "گھر کا خرچ", "expense_details", is_data=True)
+create_tile_button(r4_c2, "bg-slate", "🏠", "ہوم پیج<br><small>(HOME)</small>", "home")
 
 st.divider()
 
