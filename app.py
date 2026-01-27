@@ -6,140 +6,270 @@ import os
 # 1. ایپ کی بنیادی سیٹنگ
 st.set_page_config(page_title="Ali Mobiles & Communication", layout="wide")
 
-# 2. وی آئی پی کومپیکٹ ڈیزائن (CSS)
+# 2. وی آئی پی سپلٹ ڈیزائن (CSS) - UPDATED
 st.markdown("""
     <style>
-    .stApp { background-color: #ffffff; }
     .block-container { padding: 0.5rem 1rem !important; }
+    .stApp { background-color: #ffffff; }
     
-    /* ٹائل ڈیزائن */
-    .half-card {
-        width: 100%; height: 110px; border-radius: 12px;
-        display: flex; flex-direction: column; align-items: center;
-        justify-content: center; text-align: center;
-        box-shadow: 0 4px 8px rgba(0,0,0,0.1); color: white;
-        margin-bottom: 5px; border: 1px solid rgba(255,255,255,0.2);
+    /* سپلٹ کارڈ ڈیزائن - UPDATED */
+    .split-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: white !important;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        height: 90px;
+        overflow: hidden;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
     }
-    .card-title { font-size: 11px; font-weight: bold; text-transform: uppercase; opacity: 0.9; }
-    .card-value { font-size: 26px; font-weight: 900; }
+    .card-content {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+    }
     
-    /* گہرے گریڈینٹ کلرز */
-    .c-blue { background: linear-gradient(135deg, #0d47a1, #1976d2); }
-    .c-green { background: linear-gradient(135deg, #1b5e20, #388e3c); }
-    .c-orange { background: linear-gradient(135deg, #e65100, #f57c00); }
-    .c-purple { background: linear-gradient(135deg, #4a148c, #7b1fa2); }
-    .c-teal { background: linear-gradient(135deg, #006064, #0097a7); }
-    .c-red { background: linear-gradient(135deg, #b71c1c, #d32f2f); }
+    .m-label { font-size: 14px; font-weight: bold; opacity: 0.9; text-transform: uppercase; }
+    .m-val { font-size: 28px; font-weight: 900; margin-top: 5px; }
 
-    /* بٹن سیٹنگ */
-    .stButton > button {
-        width: 100%; border-radius: 8px; font-weight: bold;
-        height: 35px; background-color: #f1f3f4; color: #333;
+    /* بٹنوں کا ڈیزائن - UPDATED */
+    .button-card {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 90px;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+        color: white !important;
+        margin-bottom: 10px;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
+        cursor: pointer;
+    }
+    .button-card:hover { opacity: 0.9; }
+    
+    /* مخصوص رنگ */
+    .row-green { background: #1b5e20; } /* Profit */
+    .row-green-light { background: #2e7d32; } /* Entry Button */
+    .row-purple { background: #4a148c; } /* Repairing */
+    .row-purple-light { background: #6a1b9a; } /* Credit Button */
+    .row-orange { background: #e65100; } /* Banking */
+    .row-orange-light { background: #f57c00; } /* History Button */
+    .row-red { background: #b71c1c; }    /* Expense */
+    .row-red-light { background: #d32f2f; } /* Home Button */
+    </style>
+    """, unsafe_allow_html=True)
+
+# 3. لوگو
+cl1, cl2, cl3 = st.columns([1, 0.5, 1])
+with cl2:
+    if os.path.exists("logo.png"): 
+        st.image("logo.png", use_container_width=True)
+    else:
+        st.markdown("""
+        <div style='text-align:center; background:#f5f5f5; padding:10px; border-radius:10px;'>
+            <span style='color:#b71c1c; font-weight:bold; font-size:16px;'>ALI MOBILES</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+# 4. ڈیٹا لوڈنگ
+DATA_FILE = "ali_shop_split_v13.csv"
+def load_data():
+    if os.path.exists(DATA_FILE):
+        df = pd.read_csv(DATA_FILE)
+        df['تاریخ'] = pd.to_datetime(df['تاریخ'], errors='coerce')
+        return df
+    return pd.DataFrame(columns=["تاریخ", "کیٹیگری", "تفصیل", "خریداری", "فروخت", "منافع", "اسٹیٹس"])
+
+df = load_data()
+if 'page' not in st.session_state: st.session_state.page = "home"
+def nav(p): st.session_state.page = p
+
+# 5. ڈیٹا کیلکولیشن
+today = datetime.now().date()
+t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
+cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
+he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
+ut = t_df[t_df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
+rep = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
+bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
+
+# 6. 4 قطاریں برابر چوڑائی میں - UPDATED LAYOUT
+# ہر قطار میں دو برابر کالم
+
+# Row 1: کل نقد پرافٹ | ENTRY
+row1_col1, row1_col2 = st.columns(2)
+with row1_col1:
+    st.markdown(f"""
+    <div class='split-card row-green'>
+        <div class='card-content'>
+            <div class='m-label'>کل نقد پرافٹ</div>
+            <div class='m-val'>{cp}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+with row1_col2:
+    if st.button("➕ ENTRY", key="e"):
+        nav("new")
+    # CSS کے ذریعے بٹن کو کارڈ کی شکل دینا
+    st.markdown("""
+    <style>
+    div[data-testid="column"]:nth-of-type(2) button {
+        background: #2e7d32 !important;
+        color: white !important;
+        height: 90px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        border: none !important;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
+        margin-bottom: 10px !important;
+    }
+    div[data-testid="column"]:nth-of-type(2) button:hover {
+        background: #1b5e20 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. ڈیٹا لوڈنگ (Safe Mode)
-DATA_FILE = "ali_shop_pro_v16.csv"
+# Row 2: ریپیرنگ پرافٹ | CREDIT
+row2_col1, row2_col2 = st.columns(2)
+with row2_col1:
+    st.markdown(f"""
+    <div class='split-card row-purple'>
+        <div class='card-content'>
+            <div class='m-label'>ریپیرنگ پرافٹ</div>
+            <div class='m-val'>{rep}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+with row2_col2:
+    if st.button("📓 CREDIT", key="c"):
+        nav("credit")
+    st.markdown("""
+    <style>
+    div[data-testid="column"]:nth-of-type(4) button {
+        background: #6a1b9a !important;
+        color: white !important;
+        height: 90px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        border: none !important;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
+        margin-bottom: 10px !important;
+    }
+    div[data-testid="column"]:nth-of-type(4) button:hover {
+        background: #4a148c !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-def load_data():
-    if os.path.exists(DATA_FILE):
-        try:
-            df = pd.read_csv(DATA_FILE)
-            # تاریخ کو صاف کرنا (ایرر سے بچنے کے لیے)
-            df['تاریخ'] = pd.to_datetime(df['تاریخ'], errors='coerce')
-            df = df.dropna(subset=['تاریخ'])
-            return df
-        except:
-            return pd.DataFrame(columns=["تاریخ", "کیٹیگری", "تفصیل", "خریداری", "فروخت", "منافع", "اسٹیٹس"])
-    return pd.DataFrame(columns=["تاریخ", "کیٹیگری", "تفصیل", "خریداری", "فروخت", "منافع", "اسٹیٹس"])
+# Row 3: ایزی پیسہ سیل | HISTORY
+row3_col1, row3_col2 = st.columns(2)
+with row3_col1:
+    st.markdown(f"""
+    <div class='split-card row-orange'>
+        <div class='card-content'>
+            <div class='m-label'>ایزی پیسہ سیل</div>
+            <div class='m-val'>{bank}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+with row3_col2:
+    if st.button("📅 HISTORY", key="h"):
+        nav("history")
+    st.markdown("""
+    <style>
+    div[data-testid="column"]:nth-of-type(6) button {
+        background: #f57c00 !important;
+        color: white !important;
+        height: 90px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        border: none !important;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
+        margin-bottom: 10px !important;
+    }
+    div[data-testid="column"]:nth-of-type(6) button:hover {
+        background: #e65100 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
-# سٹیٹ مینیجمنٹ
-if 'page' not in st.session_state: st.session_state.page = "home"
-def nav(p):
-    st.session_state.page = p
-    # ورژن کے لحاظ سے ری رن
-    if hasattr(st, "rerun"): st.rerun()
-    else: st.experimental_rerun()
-
-df = load_data()
-
-# 4. لوگو اور ٹائٹل
-st.markdown("<h3 style='text-align:center; color:#1b5e20; margin-bottom:0;'>ALI MOBILES & COMMUNICATION</h3>", unsafe_allow_html=True)
-st.write("---")
-
-# 5. حساب کتاب
-today = datetime.now().date()
-t_df = df[df['تاریخ'].dt.date == today] if not df.empty else pd.DataFrame()
-
-p_total = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
-r_total = t_df[t_df['کیٹیگری'] == "Repairing"]['منافع'].sum()
-b_total = t_df[t_df['کیٹیگری'] == "Banking"]['فروخت'].sum()
-u_total = df[df['اسٹیٹس'] == "ادھار"]['فروخت'].sum()
-h_total = len(df)
-e_total = t_df[t_df['کیٹیگری'] == "Home Expense"]['فروخت'].sum()
-
-# 6. ڈیش بورڈ (2 Columns - Half Half Layout)
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown(f'<div class="half-card c-blue"><div class="card-title">نقد پرافٹ</div><div class="card-value">{p_total}</div></div>', unsafe_allow_html=True)
-    if st.button("تفصیل دیکھیں 📈", key="k1"): nav("home")
-
-with col2:
-    st.markdown(f'<div class="half-card c-green"><div class="card-title">ریپیرنگ</div><div class="card-value">{r_total}</div></div>', unsafe_allow_html=True)
-    if st.button("ریکارڈ کھولیں 🔧", key="k2"): nav("history")
-
-col3, col4 = st.columns(2)
-with col3:
-    st.markdown(f'<div class="half-card c-orange"><div class="card-title">نئی انٹری</div><div class="card-value">➕</div></div>', unsafe_allow_html=True)
-    if st.button("انٹری کریں 📝", key="k3"): nav("new")
-
-with col4:
-    st.markdown(f'<div class="half-card c-purple"><div class="card-title">کل ادھار</div><div class="card-value">{u_total}</div></div>', unsafe_allow_html=True)
-    if st.button("ادھار لسٹ 📓", key="k4"): nav("credit")
-
-col5, col6 = st.columns(2)
-with col5:
-    st.markdown(f'<div class="half-card c-teal"><div class="card-title">ٹوٹل ہسٹری</div><div class="card-value">{h_total}</div></div>', unsafe_allow_html=True)
-    if st.button("ہسٹری دیکھیں 📅", key="k5"): nav("history")
-
-with col6:
-    st.markdown(f'<div class="half-card c-red"><div class="card-title">بینکنگ سیل</div><div class="card-value">{b_total}</div></div>', unsafe_allow_html=True)
-    if st.button("بینکنگ ڈیٹا 💰", key="k6"): nav("banking")
+# Row 4: گھر کا خرچ | HOME
+row4_col1, row4_col2 = st.columns(2)
+with row4_col1:
+    st.markdown(f"""
+    <div class='split-card row-red'>
+        <div class='card-content'>
+            <div class='m-label'>گھر کا خرچ</div>
+            <div class='m-val'>{he}</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+with row4_col2:
+    if st.button("🏠 HOME", key="hm"):
+        nav("home")
+    st.markdown("""
+    <style>
+    div[data-testid="column"]:nth-of-type(8) button {
+        background: #d32f2f !important;
+        color: white !important;
+        height: 90px !important;
+        width: 100% !important;
+        border-radius: 12px !important;
+        font-size: 18px !important;
+        font-weight: bold !important;
+        border: none !important;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2) !important;
+        margin-bottom: 10px !important;
+    }
+    div[data-testid="column"]:nth-of-type(8) button:hover {
+        background: #b71c1c !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
 st.divider()
 
-# 7. پیجز کی تفصیل
+# 7. پیجز کا ڈیٹا (یہ وہی رہے گا)
 if st.session_state.page == "home":
-    st.subheader("📊 آج کی کارکردگی")
+    st.subheader("📋 آج کی سیل")
     st.dataframe(t_df, use_container_width=True)
 
 elif st.session_state.page == "new":
     st.subheader("📝 نئی انٹری")
-    with st.form("ali_form", clear_on_submit=True):
+    with st.form("vip_f"):
         cat = st.selectbox("کیٹیگری", ["Accessories", "Repairing", "Banking", "Home Expense"])
         det = st.text_input("تفصیل")
         pay = st.radio("ادائیگی", ["نقد", "ادھار"], horizontal=True) if cat != "Home Expense" else "نقد"
-        c_val = st.number_input("لاگت (Cost)", min_value=0)
-        s_val = st.number_input("فروخت (Sale)", min_value=0)
+        cx, sx = st.columns(2)
+        cost = cx.number_input("لاگت", min_value=0)
+        sale = sx.number_input("وصولی", min_value=0)
         if st.form_submit_button("محفوظ کریں"):
-            prof = 0 if cat == "Home Expense" else (s_val - c_val)
-            nr = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": c_val, "فروخت": s_val, "منافع": prof, "اسٹیٹس": pay}
+            p = 0 if cat == "Home Expense" else (sale - cost)
+            nr = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": cost, "فروخت": sale, "منافع": p, "اسٹیٹس": pay}
             df = pd.concat([df, pd.DataFrame([nr])], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
-            st.success("ریکارڈ سیو ہو گیا!")
-            nav("home")
+            st.success("محفوظ ہو گیا!"); st.rerun()
 
 elif st.session_state.page == "credit":
     st.subheader("📓 ادھار لسٹ")
-    st.dataframe(df[df['اسٹیٹس'] == "ادھار"], use_container_width=True)
+    cl = df[df['اسٹیٹس'] == "ادھار"]
+    if not cl.empty:
+        st.table(cl[["تاریخ", "تفصیل", "فروخت"]])
+        st.info(f"کل ادھار: {cl['فروخت'].sum()}")
+    else:
+        st.info("کوئی ادھار نہیں")
 
 elif st.session_state.page == "history":
-    st.subheader("📅 مکمل ہسٹری")
+    st.subheader("📅 مکمل ریکارڈ")
     st.dataframe(df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
-
-elif st.session_state.page == "banking":
-    st.subheader("💰 بینکنگ تفصیل")
-    st.dataframe(df[df['کیٹیگری'] == "Banking"], use_container_width=True)
-    
