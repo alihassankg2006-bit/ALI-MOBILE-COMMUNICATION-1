@@ -6,107 +6,109 @@ import os
 # ایپ کی بنیادی سیٹنگ
 st.set_page_config(page_title="Ali Mobile Shop Pro", layout="wide")
 
-# ڈیٹا فائل لوڈ کرنا
-DATA_FILE = "ali_shop_pro_v2.csv"
+# کسٹم اسٹائلنگ (ایرر فکسڈ)
+st.markdown("""
+    <style>
+    .main { background-color: #f0f2f6; }
+    .stMetric { background-color: #ffffff; padding: 15px; border-radius: 10px; box-shadow: 0px 4px 10px rgba(0,0,0,0.1); }
+    </style>
+    """, unsafe_allow_html=True)
+
+# ڈیٹا فائل کا نام
+DATA_FILE = "ali_mobile_pro_final.csv"
+
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
-        df['تاریخ'] = pd.to_datetime(df['تاریخ'])
+        df['تاریخ'] = pd.to_datetime(df['تاریخ'], errors='coerce')
         return df
     else:
-        return pd.DataFrame(columns=["تاریخ", "کیٹیگری", "آئٹم/تفصیل", "خریداری/کوسٹ", "فروخت/آمدن", "منافع"])
+        return pd.DataFrame(columns=["تاریخ", "کیٹیگری", "تفصیل", "خریداری", "فروخت", "منافع", "اسٹیٹس"])
 
 df = load_data()
 
-# سائیڈ بار مینو
+# مینو
 st.sidebar.title("📱 علی موبائل مینو")
-menu = ["📊 ڈیش بورڈ", "📝 نئی انٹری", "📅 ریکارڈ ہسٹری"]
-choice = st.sidebar.radio("کدھر جانا ہے؟", menu)
+choice = st.sidebar.radio("سیکشن منتخب کریں", ["📊 ڈیش بورڈ", "📝 نئی انٹری", "📓 ادھار ریکارڈ", "📅 مکمل تاریخ"])
 
 # --- ڈیش بورڈ ---
 if choice == "📊 ڈیش بورڈ":
     st.title("🚀 علی موبائل شاپ ڈیش بورڈ")
     
     today = datetime.now().date()
-    today_df = df[df['تاریخ'].dt.date == today]
-    
-    # حساب کتاب
-    total_profit = today_df[today_df['کیٹیگری'] != "گھر کا خرچ"]['منافع'].sum()
-    home_exp = today_df[today_df['کیٹیگری'] == "گھر کا خرچ"]['فروخت/آمدن'].sum()
-    net_savings = total_profit - home_exp
+    # اگر ڈیٹا خالی نہ ہو تو آج کا ریکارڈ فلٹر کریں
+    if not df.empty:
+        df['تاریخ_صرف'] = df['تاریخ'].dt.date
+        today_df = df[df['تاریخ_صرف'] == today]
+    else:
+        today_df = df
 
-    # رنگین کارڈز
-    col1, col2, col3 = st.columns(3)
+    # حساب کتاب
+    cash_profit = today_df[(today_df['اسٹیٹس'] == "نقد") & (today_df['کیٹیگری'] != "گھر کا خرچ")]['منافع'].sum()
+    home_exp = today_df[today_df['کیٹیگری'] == "گھر کا خرچ"]['فروخت'].sum()
+    today_udhaar = today_df[today_df['اسٹیٹس'] == "ادھار"]['فروخت'].sum()
+    net_cash = cash_profit - home_exp
+
+    col1, col2, col3, col4 = st.columns(4)
     with col1:
-        st.success(f"💰 آج کا کل پرافٹ: {total_profit} PKR")
+        st.metric("💰 نقد منافع (آج)", f"{cash_profit} PKR")
     with col2:
-        st.error(f"🏠 گھر کا خرچ: {home_exp} PKR")
+        st.error(f"🏠 گھر خرچ: {home_exp}")
     with col3:
-        st.info(f"💵 باقی بچت: {net_savings} PKR")
+        st.warning(f"📝 آج کا ادھار: {today_udhaar}")
+    with col4:
+        st.info(f"💵 خالص بچت: {net_cash}")
 
     st.divider()
-    
-    # کیٹیگری وائز بریک ڈاؤن
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.write("🛠 ریپیرنگ پرافٹ:", today_df[today_df['کیٹیگری'] == "ریپیرنگ"]['منافع'].sum())
-    with c2:
-        st.write("🎧 ایسیسریز پرافٹ:", today_df[today_df['کیٹیگری'] == "ایسیسریز"]['منافع'].sum())
-    with c3:
-        st.write("💸 بینکنگ پرافٹ:", today_df[today_df['کیٹیگری'] == "ایزی پیسہ/جائز کیش"]['منافع'].sum())
-
-    st.subheader("📝 آج کی تمام انٹریز")
-    st.dataframe(today_df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
+    st.subheader("آج کی تمام انٹریز")
+    st.dataframe(today_df.drop(columns=['تاریخ_صرف'], errors='ignore'), use_container_width=True)
 
 # --- نئی انٹری ---
 elif choice == "📝 نئی انٹری":
     st.title("➕ نیا ریکارڈ درج کریں")
-    
     with st.form("entry_form", clear_on_submit=True):
-        cat = st.selectbox("کیٹیگری منتخب کریں", ["ایسیسریز", "ریپیرنگ", "ایزی پیسہ/جائز کیش", "گھر کا خرچ"])
-        item = st.text_input("آئٹم / تفصیل (مثلاً: سبزی کے لیے، یا گاہک کا نام)")
+        cat = st.selectbox("کیٹیگری", ["ایسیسریز", "ریپیرنگ", "ایزی پیسہ/جائز کیش", "گھر کا خرچ"])
+        detail = st.text_input("تفصیل (آئٹم یا گاہک کا نام)")
         
-        if cat == "گھر کا خرچ":
-            amount = st.number_input("کتنے پیسے لے کر گئے؟", min_value=0)
-            cost, sale = 0, amount
-        else:
-            col_a, col_b = st.columns(2)
-            with col_a:
-                cost = st.number_input("خریداری قیمت / لاگت", min_value=0)
-            with col_b:
-                sale = st.number_input("فروخت قیمت / وصولی", min_value=0)
-        
-        submit = st.form_submit_button("سیو کریں")
+        status = "نقد"
+        if cat != "گھر کا خرچ":
+            status = st.radio("ادائیگی کی قسم", ["نقد", "ادھار"], horizontal=True)
+            
+        col_a, col_b = st.columns(2)
+        with col_a:
+            cost = st.number_input("خریداری / لاگت", min_value=0)
+        with col_b:
+            sale = st.number_input("فروخت / وصولی", min_value=0)
+            
+        submit = st.form_submit_button("محفوظ کریں")
         
         if submit:
             profit = 0 if cat == "گھر کا خرچ" else (sale - cost)
             new_row = {
                 "تاریخ": datetime.now(),
                 "کیٹیگری": cat,
-                "آئٹم/تفصیل": item,
-                "خریداری/کوسٹ": cost,
-                "فروخت/آمدن": sale,
-                "منافع": profit
+                "تفصیل": detail,
+                "خریداری": cost,
+                "فروخت": sale,
+                "منافع": profit,
+                "اسٹیٹس": status
             }
             df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
             st.success("ریکارڈ محفوظ ہو گیا!")
 
-# --- ریکارڈ ہسٹری ---
-elif choice == "📅 ریکارڈ ہسٹری":
-    st.title("📂 ریکارڈ چیک کریں")
-    filter_type = st.radio("فلٹر", ["ڈیلی", "منتھلی", "سالانہ"], horizontal=True)
-    
-    if filter_type == "ڈیلی":
-        pick_date = st.date_input("تاریخ", datetime.now())
-        f_df = df[df['تاریخ'].dt.date == pick_date]
-    elif filter_type == "منتھلی":
-        m = st.selectbox("مہینہ", range(1, 13), index=datetime.now().month-1)
-        f_df = df[(df['تاریخ'].dt.month == m) & (df['تاریخ'].dt.year == datetime.now().year)]
+# --- ادھار ریکارڈ ---
+elif choice == "📓 ادھار ریکارڈ":
+    st.title("📓 ادھار کی لسٹ")
+    udhaar_list = df[df['اسٹیٹس'] == "ادھار"]
+    if not udhaar_list.empty:
+        st.table(udhaar_list[["تاریخ", "تفصیل", "فروخت"]])
+        st.subheader(f"کل واجب الادا ادھار: {udhaar_list['فروخت'].sum()} PKR")
     else:
-        y = st.selectbox("سال", [2025, 2026, 2027])
-        f_df = df[df['تاریخ'].dt.year == y]
-        
-    st.table(f_df)
-    st.write(f"### اس پیریڈ کا ٹوٹل پرافٹ: {f_df[f_df['کیٹیگری'] != 'گھر کا خرچ']['منافع'].sum()} PKR")
-    st.write(f"### اس پیریڈ کا ٹوٹل گھر کا خرچ: {f_df[f_df['کیٹیگری'] == 'گھر کا خرچ']['فروخت/آمدن'].sum()} PKR")
+        st.success("فی الحال کوئی ادھار نہیں ہے!")
+
+# --- مکمل تاریخ ---
+elif choice == "📅 مکمل تاریخ":
+    st.title("📅 مکمل ریکارڈز")
+    st.dataframe(df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
+    
