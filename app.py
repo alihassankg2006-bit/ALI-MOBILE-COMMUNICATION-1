@@ -83,6 +83,12 @@ st.markdown("""
     }
 
     /* تمام 8 گہرے اور مستقل رنگ (Deep Solid Colors) */
+    /* انٹری سب سے اوپر - جامنی رنگ */
+    .bg-purple { 
+        background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
+        border: 2px solid #ab47bc;
+    } /* انٹری - جامنی */
+    
     .bg-green { 
         background: linear-gradient(135deg, #1b5e20 0%, #2e7d32 100%);
         border: 2px solid #4caf50;
@@ -103,12 +109,7 @@ st.markdown("""
         border: 2px solid #ffb74d;
     } /* بینکنگ */
     
-    /* نیچے والے 4 بٹنز کے رنگ */
-    .bg-purple { 
-        background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%);
-        border: 2px solid #ab47bc;
-    } /* انٹری - جامنی */
-    
+    /* باقی بٹنز کے رنگ */
     .bg-teal { 
         background: linear-gradient(135deg, #006064 0%, #00838f 100%);
         border: 2px solid #26a69a;
@@ -145,6 +146,11 @@ st.markdown("""
         .tile-button-text {
             font-size: 14px;
         }
+    }
+    
+    /* چھوٹے بٹنوں کو چھپانے کے لیے */
+    .hidden-button {
+        display: none !important;
     }
     </style>
     """, unsafe_allow_html=True)
@@ -194,119 +200,189 @@ bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
 
 # --- 8 بڑے رنگین ڈبے (4 قطاریں، ہر قطار میں 2 ڈبے) ---
 
-# پہلی قطار (حساب کے ڈبے)
+# پہلی قطار: انٹری اور پرافٹ (انٹری سب سے اوپر)
 r1_c1, r1_c2 = st.columns(2)
 with r1_c1: 
-    st.markdown(f"""
-    <div class='big-tile bg-green' onclick="window.clickTile('profit')">
-        <div class='tile-name'>کل نقد پرافٹ</div>
-        <div class='tile-data'>{cp}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("", key="profit_btn"): 
-        nav("profit_details")
-
-with r1_c2: 
-    st.markdown(f"""
-    <div class='big-tile bg-blue' onclick="window.clickTile('repair')">
-        <div class='tile-name'>ریپیرنگ پرافٹ</div>
-        <div class='tile-data'>{rep}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("", key="repair_btn"): 
-        nav("repair_details")
-
-# دوسری قطار (حساب کے ڈبے)
-r2_c1, r2_c2 = st.columns(2)
-with r2_c1: 
-    st.markdown(f"""
-    <div class='big-tile bg-red' onclick="window.clickTile('expense')">
-        <div class='tile-name'>گھر کا خرچ</div>
-        <div class='tile-data'>{he}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("", key="expense_btn"): 
-        nav("expense_details")
-
-with r2_c2: 
-    st.markdown(f"""
-    <div class='big-tile bg-orange' onclick="window.clickTile('banking')">
-        <div class='tile-name'>ایزی پیسہ سیل</div>
-        <div class='tile-data'>{bank}</div>
-    </div>
-    """, unsafe_allow_html=True)
-    if st.button("", key="banking_btn"): 
-        nav("banking_details")
-
-# تیسری قطار (بٹن ڈبے - پہلا جوڑا)
-r3_c1, r3_c2 = st.columns(2)
-with r3_c1: 
+    # انٹری باکس - سب سے اوپر
     st.markdown("""
     <div class='big-tile bg-purple' onclick="window.clickTile('new_entry')">
         <div class='tile-icon'>➕</div>
         <div class='tile-button-text'>نئی انٹری<br><small>(NEW ENTRY)</small></div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="new_entry_btn"): 
+    # خفیہ بٹن - صرف فنکشن کے لیے
+    if st.button("", key="new_entry_btn", help="نئی انٹری"): 
         nav("new")
 
-with r3_c2: 
+with r1_c2: 
+    # کل نقد پرافٹ
+    st.markdown(f"""
+    <div class='big-tile bg-green' onclick="window.clickTile('profit')">
+        <div class='tile-name'>کل نقد پرافٹ</div>
+        <div class='tile-data'>{cp}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    # خفیہ بٹن
+    if st.button("", key="profit_btn", help="کل نقد پرافٹ"): 
+        nav("profit_details")
+
+# دوسری قطار: ریپیرنگ اور کریڈٹ
+r2_c1, r2_c2 = st.columns(2)
+with r2_c1: 
+    # ریپیرنگ پرافٹ
+    st.markdown(f"""
+    <div class='big-tile bg-blue' onclick="window.clickTile('repair')">
+        <div class='tile-name'>ریپیرنگ پرافٹ</div>
+        <div class='tile-data'>{rep}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    # خفیہ بٹن
+    if st.button("", key="repair_btn", help="ریپیرنگ پرافٹ"): 
+        nav("repair_details")
+
+with r2_c2: 
+    # کریڈٹ لسٹ
     st.markdown("""
     <div class='big-tile bg-teal' onclick="window.clickTile('credit')">
         <div class='tile-icon'>📓</div>
         <div class='tile-button-text'>ادھار لسٹ<br><small>(CREDIT LIST)</small></div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="credit_btn"): 
+    # خفیہ بٹن
+    if st.button("", key="credit_btn", help="ادھار لسٹ"): 
         nav("credit")
 
-# چوتھی قطار (بٹن ڈبے - دوسرا جوڑا)
-r4_c1, r4_c2 = st.columns(2)
-with r4_c1: 
+# تیسری قطار: ایزی پیسہ اور ہسٹری
+r3_c1, r3_c2 = st.columns(2)
+with r3_c1: 
+    # ایزی پیسہ سیل
+    st.markdown(f"""
+    <div class='big-tile bg-orange' onclick="window.clickTile('banking')">
+        <div class='tile-name'>ایزی پیسہ سیل</div>
+        <div class='tile-data'>{bank}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    # خفیہ بٹن
+    if st.button("", key="banking_btn", help="ایزی پیسہ سیل"): 
+        nav("banking_details")
+
+with r3_c2: 
+    # ہسٹری
     st.markdown("""
     <div class='big-tile bg-pink' onclick="window.clickTile('history')">
         <div class='tile-icon'>📅</div>
         <div class='tile-button-text'>مکمل ہسٹری<br><small>(HISTORY)</small></div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="history_btn"): 
+    # خفیہ بٹن
+    if st.button("", key="history_btn", help="مکمل ہسٹری"): 
         nav("history")
 
+# چوتھی قطار: گھر کا خرچ اور ہوم
+r4_c1, r4_c2 = st.columns(2)
+with r4_c1: 
+    # گھر کا خرچ
+    st.markdown(f"""
+    <div class='big-tile bg-red' onclick="window.clickTile('expense')">
+        <div class='tile-name'>گھر کا خرچ</div>
+        <div class='tile-data'>{he}</div>
+    </div>
+    """, unsafe_allow_html=True)
+    # خفیہ بٹن
+    if st.button("", key="expense_btn", help="گھر کا خرچ"): 
+        nav("expense_details")
+
 with r4_c2: 
+    # ہوم پیج
     st.markdown("""
     <div class='big-tile bg-slate' onclick="window.clickTile('home')">
         <div class='tile-icon'>🏠</div>
         <div class='tile-button-text'>ہوم پیج<br><small>(HOME)</small></div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="home_btn"): 
+    # خفیہ بٹن
+    if st.button("", key="home_btn", help="ہوم پیج"): 
         nav("home")
 
-# JavaScript for click handling
+# JavaScript for click handling - بڑے باکسوں پر کلک کے لیے
 st.markdown("""
 <script>
+// باکس پر کلک کرنے کا فنکشن
 window.clickTile = function(tileType) {
-    // یہاں آپ کلک ہینڈلنگ کا کوڈ شامل کر سکتے ہیں
     console.log('Tile clicked:', tileType);
     
-    // بٹن پر کلک کرنے کا سیمولیشن
-    const buttonMap = {
-        'profit': 'profit_btn',
-        'repair': 'repair_btn',
-        'expense': 'expense_btn',
-        'banking': 'banking_btn',
-        'new_entry': 'new_entry_btn',
-        'credit': 'credit_btn',
-        'history': 'history_btn',
-        'home': 'home_btn'
+    // Streamlit کے ساتھ بات چیت کے لیے
+    const parentWindow = window.parent;
+    
+    // ہر tile کے لیے متعلقہ action
+    const actions = {
+        'new_entry': function() {
+            // انٹری کے لیے
+            console.log('Opening New Entry...');
+            window.location.href = window.location.href.split('?')[0] + '?page=new';
+        },
+        'profit': function() {
+            console.log('Opening Profit Details...');
+            window.location.href = window.location.href.split('?')[0] + '?page=profit_details';
+        },
+        'repair': function() {
+            console.log('Opening Repair Details...');
+            window.location.href = window.location.href.split('?')[0] + '?page=repair_details';
+        },
+        'credit': function() {
+            console.log('Opening Credit List...');
+            window.location.href = window.location.href.split('?')[0] + '?page=credit';
+        },
+        'banking': function() {
+            console.log('Opening Banking Details...');
+            window.location.href = window.location.href.split('?')[0] + '?page=banking_details';
+        },
+        'history': function() {
+            console.log('Opening History...');
+            window.location.href = window.location.href.split('?')[0] + '?page=history';
+        },
+        'expense': function() {
+            console.log('Opening Expense Details...');
+            window.location.href = window.location.href.split('?')[0] + '?page=expense_details';
+        },
+        'home': function() {
+            console.log('Going Home...');
+            window.location.href = window.location.href.split('?')[0] + '?page=home';
+        }
     };
     
-    if (buttonMap[tileType]) {
-        // Streamlit بٹن پر کلک کا سیمولیشن
-        console.log('Simulating click on button:', buttonMap[tileType]);
+    // متعلقہ action چلائیں
+    if (actions[tileType]) {
+        actions[tileType]();
     }
 }
+
+// تمام بڑے ڈبوں پر کلک ایونٹ شامل کریں
+document.addEventListener('DOMContentLoaded', function() {
+    const tiles = document.querySelectorAll('.big-tile');
+    tiles.forEach(tile => {
+        tile.addEventListener('click', function() {
+            const tileId = this.getAttribute('onclick').match(/clickTile\('(.*)'\)/)[1];
+            window.clickTile(tileId);
+        });
+    });
+});
 </script>
+""", unsafe_allow_html=True)
+
+# چھوٹے بٹنوں کو چھپانے کے لیے CSS
+st.markdown("""
+<style>
+/* تمام چھوٹے بٹنوں کو چھپائیں */
+.stButton > button {
+    display: none !important;
+}
+
+/* صرف form submission بٹنز دکھائیں */
+.stForm > div > button {
+    display: flex !important;
+}
+</style>
 """, unsafe_allow_html=True)
 
 st.divider()
@@ -410,6 +486,24 @@ elif st.session_state.page == "repair_details":
         st.metric("ریپیرنگ پرافٹ", f"₹{rep}")
     else:
         st.info("آج کے لیے کوئی ریپیرنگ پرافٹ نہیں ہے۔")
+
+elif st.session_state.page == "expense_details":
+    st.subheader("🏠 گھر کے خرچ کی تفصیلات")
+    expense_df = t_df[t_df['کیٹیگری'] == "Home Expense"]
+    if not expense_df.empty:
+        st.dataframe(expense_df, use_container_width=True)
+        st.metric("کل گھر کا خرچ", f"₹{he}")
+    else:
+        st.info("آج کے لیے کوئی گھر کا خرچ نہیں ہے۔")
+
+elif st.session_state.page == "banking_details":
+    st.subheader("💰 ایزی پیسہ سیلز کی تفصیلات")
+    banking_df = t_df[t_df['کیٹیگری'] == "Banking"]
+    if not banking_df.empty:
+        st.dataframe(banking_df, use_container_width=True)
+        st.metric("کل ایزی پیسہ سیلز", f"₹{bank}")
+    else:
+        st.info("آج کے لیے کوئی ایزی پیسہ سیلز نہیں ہیں۔")
 
 # فوٹر
 st.markdown("---")
