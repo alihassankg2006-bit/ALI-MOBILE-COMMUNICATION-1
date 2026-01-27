@@ -515,3 +515,39 @@ st.markdown(
     "</p>",
     unsafe_allow_html=True
 )
+def create_tile_button(column, color_class, content, title, page_key, is_data=False):
+    with column:
+        st.markdown(f"""
+        <style>
+        div[data-testid="stButton"] > button {{
+            width: 100%;
+            height: 140px;
+            border-radius: 20px;
+            background: none;
+            border: none;
+            padding: 0;
+        }}
+        div[data-testid="stButton"] > button:hover {{
+            transform: translateY(-4px);
+        }}
+        </style>
+        """, unsafe_allow_html=True)
+
+        if is_data:
+            label = f"""
+            <div class="big-tile {color_class}">
+                <div class="tile-name">{title}</div>
+                <div class="tile-data">{content}</div>
+            </div>
+            """
+        else:
+            label = f"""
+            <div class="big-tile {color_class}">
+                <div class="tile-icon">{content}</div>
+                <div class="tile-button-text">{title}</div>
+            </div>
+            """
+
+        if st.button(label, key=page_key):
+            st.session_state.page = page_key
+            st.rerun()
