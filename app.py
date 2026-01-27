@@ -143,4 +143,3 @@ elif st.session_state.page == "credit":
 elif st.session_state.page == "history":
     st.subheader("📅 مکمل ہسٹری")
     st.dataframe(df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
-    
