@@ -12,7 +12,7 @@ st.markdown("""
     .block-container { padding: 0.5rem 0.5rem !important; }
     .stApp { background-color: #ffffff; }
     
-    /* تمام ڈبوں (Metrics & Buttons) کا ایک جیسا پروفیشنل ڈیزائن */
+    /* میٹرک ڈبوں کا ڈیزائن (پہلے 4 ڈبے) */
     .big-tile {
         height: 140px; 
         border-radius: 20px;
@@ -22,51 +22,53 @@ st.markdown("""
         justify-content: center;
         text-align: center;
         color: white !important;
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2);
+        box-shadow: 0px 8px 15px rgba(0,0,0,0.2);
         margin-bottom: 15px;
-        border: 2px solid rgba(255,255,255,0.1);
     }
-    .tile-name { font-size: 14px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-    .tile-data { font-size: 36px; font-weight: 900; }
+    .tile-name { font-size: 13px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .tile-data { font-size: 34px; font-weight: 900; }
 
-    /* اسٹریم لٹ بٹن کو ٹائل جیسا بنانا */
+    /* مینو بٹنوں کا ڈیزائن (نیچے والے 4 ڈبے) */
     div.stButton > button {
         height: 140px !important;
         width: 100% !important;
         border-radius: 20px !important;
-        font-size: 20px !important;
+        font-size: 18px !important;
         font-weight: 800 !important;
         color: white !important;
         border: none !important;
-        box-shadow: 0px 8px 20px rgba(0,0,0,0.2) !important;
+        box-shadow: 0px 8px 15px rgba(0,0,0,0.2) !important;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        transition: 0.3s;
+        margin-bottom: 15px !important;
+        white-space: pre-wrap !important; /* نام کو ڈبے کے اندر سیٹ کرنے کے لیے */
     }
-    div.stButton > button:hover { transform: scale(0.97); opacity: 0.9; }
 
-    /* 8 پروفیشنل گہرے رنگ */
-    .bg-green { background: linear-gradient(135deg, #1b5e20, #2e7d32); }
-    .bg-blue { background: linear-gradient(135deg, #0d47a1, #1e88e5); }
-    .bg-red { background: linear-gradient(135deg, #b71c1c, #d32f2f); }
-    .bg-orange { background: linear-gradient(135deg, #e65100, #ff9800); }
+    /* 8 گہرے اور مستقل رنگ (Deep Solid Colors) */
+    .bg-green { background: linear-gradient(135deg, #1b5e20, #2e7d32); } /* پرافٹ */
+    .bg-blue { background: linear-gradient(135deg, #0d47a1, #1e88e5); }  /* ریپیرنگ */
+    .bg-red { background: linear-gradient(135deg, #b71c1c, #d32f2f); }   /* خرچہ */
+    .bg-orange { background: linear-gradient(135deg, #e65100, #ff9800); } /* بینکنگ */
     
-    /* بٹنوں کے رنگ */
-    button[key="btn_new"] { background: linear-gradient(135deg, #4a148c, #8e24aa) !important; }
-    button[key="btn_credit"] { background: linear-gradient(135deg, #006064, #0097a7) !important; }
-    button[key="btn_hist"] { background: linear-gradient(135deg, #c2185b, #e91e63) !important; }
-    button[key="btn_home"] { background: linear-gradient(135deg, #263238, #455a64) !important; }
+    /* بٹنوں کے مخصوص گہرے رنگ */
+    button[key="btn_new"] { background: linear-gradient(135deg, #4a148c, #6a1b9a) !important; } /* انٹری - جامنی */
+    button[key="btn_credit"] { background: linear-gradient(135deg, #006064, #00838f) !important; } /* کریڈٹ - ٹیل */
+    button[key="btn_hist"] { background: linear-gradient(135deg, #c2185b, #ad1457) !important; } /* ہسٹری - گلابی */
+    button[key="btn_home"] { background: linear-gradient(135deg, #263238, #37474f) !important; } /* ہوم - سلیٹی */
+
+    /* بٹن ہوور ایفیکٹ */
+    div.stButton > button:hover { transform: scale(0.98); opacity: 0.95; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو
+# 3. لوگو (صرف اگر فائل موجود ہو)
 cl1, cl2, cl3 = st.columns([1, 0.4, 1])
 with cl2:
     if os.path.exists("logo.png"): st.image("logo.png", use_container_width=True)
 
 # 4. ڈیٹا ہینڈلنگ
-DATA_FILE = "ali_shop_v19_final.csv"
+DATA_FILE = "ali_shop_v20_final.csv"
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
@@ -90,63 +92,62 @@ bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
 
 # --- 8 بڑے رنگین ڈبے (2 Columns) ---
 
-# Row 1
-c1, c2 = st.columns(2)
-with c1: st.markdown(f"<div class='big-tile bg-green'><div class='tile-name'>کل نقد پرافٹ</div><div class='tile-data'>{cp}</div></div>", unsafe_allow_html=True)
-with c2: st.markdown(f"<div class='big-tile bg-blue'><div class='tile-name'>ریپیرنگ پرافٹ</div><div class='tile-data'>{rep}</div></div>", unsafe_allow_html=True)
+# پہلی قطار (حساب)
+r1_c1, r1_c2 = st.columns(2)
+with r1_c1: st.markdown(f"<div class='big-tile bg-green'><div class='tile-name'>کل نقد پرافٹ</div><div class='tile-data'>{cp}</div></div>", unsafe_allow_html=True)
+with r1_c2: st.markdown(f"<div class='big-tile bg-blue'><div class='tile-name'>ریپیرنگ پرافٹ</div><div class='tile-data'>{rep}</div></div>", unsafe_allow_html=True)
 
-# Row 2
-c3, c4 = st.columns(2)
-with c3: st.markdown(f"<div class='big-tile bg-red'><div class='tile-name'>گھر کا خرچ</div><div class='tile-data'>{he}</div></div>", unsafe_allow_html=True)
-with c4: st.markdown(f"<div class='big-tile bg-orange'><div class='tile-name'>ایزی پیسہ سیل</div><div class='tile-data'>{bank}</div></div>", unsafe_allow_html=True)
+# دوسری قطار (حساب)
+r2_c1, r2_c2 = st.columns(2)
+with r2_c1: st.markdown(f"<div class='big-tile bg-red'><div class='tile-name'>گھر کا خرچ</div><div class='tile-data'>{he}</div></div>", unsafe_allow_html=True)
+with r2_c2: st.markdown(f"<div class='big-tile bg-orange'><div class='tile-name'>ایزی پیسہ سیل</div><div class='tile-data'>{bank}</div></div>", unsafe_allow_html=True)
 
-# Row 3 (Buttons)
-c5, c6 = st.columns(2)
-with c5: 
+# تیسری قطار (بٹن - اب یہ بھی بڑے اور رنگین ہیں)
+r3_c1, r3_c2 = st.columns(2)
+with r3_c1: 
     if st.button("➕\nنئی انٹری\n(NEW ENTRY)", key="btn_new"): nav("new")
-with c6: 
+with r3_c2: 
     if st.button("📓\nادھار لسٹ\n(CREDIT LIST)", key="btn_credit"): nav("credit")
 
-# Row 4 (Buttons)
-c7, c8 = st.columns(2)
-with c7: 
+# چوتھی قطار (بٹن)
+r4_c1, r4_c2 = st.columns(2)
+with r4_c1: 
     if st.button("📅\nمکمل ہسٹری\n(HISTORY)", key="btn_hist"): nav("history")
-with c8: 
+with r4_c2: 
     if st.button("🏠\nہوم پیج\n(HOME)", key="btn_home"): nav("home")
 
 st.divider()
 
-# 6. پیجز کا ڈیٹا
+# 6. پیجز کی تفصیل
 if st.session_state.page == "home":
-    st.subheader("📋 آج کا ریکارڈ")
+    st.subheader("📋 آج کی کارکردگی")
     st.dataframe(t_df, use_container_width=True)
 
 elif st.session_state.page == "new":
-    st.subheader("📝 ڈیٹا درج کریں")
+    st.subheader("📝 نیا ڈیٹا درج کریں")
     with st.form("ali_form"):
         cat = st.selectbox("کیٹیگری", ["Accessories", "Repairing", "Banking", "Home Expense"])
         det = st.text_input("تفصیل")
         pay = st.radio("ادائیگی", ["نقد", "ادھار"], horizontal=True) if cat != "Home Expense" else "نقد"
         v1, v2 = st.columns(2)
-        cost = v1.number_input("خریداری (Cost)", min_value=0)
+        cost = v1.number_input("لاگت (Cost)", min_value=0)
         sale = v2.number_input("وصولی (Sale)", min_value=0)
-        if st.form_submit_button("محفوظ کریں"):
+        if st.form_submit_button("سیو کریں"):
             p = 0 if cat == "Home Expense" else (sale - cost)
             new_r = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": cost, "فروخت": sale, "منافع": p, "اسٹیٹس": pay}
             df = pd.concat([df, pd.DataFrame([new_r])], ignore_index=True)
             df.to_csv(DATA_FILE, index=False)
-            st.success("محفوظ ہو گیا!")
-            nav("home")
+            st.success("محفوظ ہو گیا!"); nav("home")
 
 elif st.session_state.page == "credit":
-    st.subheader("📓 ادھار لسٹ")
+    st.subheader("📓 ادھار کی لسٹ")
     cl = df[df['اسٹیٹس'] == "ادھار"]
     if not cl.empty:
         st.table(cl[["تاریخ", "تفصیل", "فروخت"]])
-        st.error(f"ٹوٹل ادھار: {cl['فروخت'].sum()} PKR")
+        st.error(f"کل واجب الادا رقم: {cl['فروخت'].sum()}")
     else: st.info("کوئی ادھار نہیں ہے۔")
 
 elif st.session_state.page == "history":
-    st.subheader("📅 دکان کا مکمل ڈیٹا")
+    st.subheader("📅 مکمل ریکارڈ")
     st.dataframe(df.sort_values(by="تاریخ", ascending=False), use_container_width=True)
     
