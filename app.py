@@ -4,56 +4,62 @@ from datetime import datetime
 import os
 
 # 1. ایپ کی بنیادی سیٹنگ
-st.set_page_config(page_title="Ali Mobiles", layout="wide")
+st.set_page_config(page_title="Ali Mobiles & Communication", layout="wide")
 
-# 2. الٹرا کومپیکٹ ڈیزائن (CSS)
+# 2. وی آئی پی سپلٹ ڈیزائن (CSS)
 st.markdown("""
     <style>
-    /* اسکرین کی فالتو جگہ ختم کرنا */
-    .block-container { padding: 0.5rem 0.5rem !important; }
+    .block-container { padding: 0.5rem 1rem !important; }
     .stApp { background-color: #ffffff; }
     
-    /* چھوٹے رنگین ڈبوں (Tiles) کا ڈیزائن */
-    .tile {
-        color: white !important;
-        padding: 5px;
-        border-radius: 8px;
-        text-align: center;
-        height: 70px; /* اونچائی مزید کم کر دی گئی ہے */
+    /* سپلٹ کارڈ ڈیزائن */
+    .split-card {
         display: flex;
-        flex-direction: column;
-        justify-content: center;
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
-        margin-bottom: 5px;
+        align-items: center;
+        justify-content: space-between;
+        color: white !important;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        height: 75px;
+        overflow: hidden;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
     }
-    .t-label { font-size: 10px; font-weight: bold; opacity: 0.9; }
-    .t-val { font-size: 18px; font-weight: 900; }
+    .left-side { width: 55%; padding-left: 15px; text-align: left; }
+    .divider { width: 2px; height: 50px; background: rgba(255,255,255,0.3); }
+    .right-side { width: 45%; }
+    
+    .m-label { font-size: 11px; font-weight: bold; opacity: 0.8; text-transform: uppercase; }
+    .m-val { font-size: 22px; font-weight: 900; }
 
-    /* بٹنوں کو ڈبوں جیسا بنانا */
+    /* بٹنوں کو ڈبوں میں فکس کرنا */
     div.stButton > button {
-        height: 70px !important;
+        height: 75px !important;
         width: 100%;
-        border-radius: 8px;
-        font-size: 14px;
+        border-radius: 0px !important;
+        font-size: 16px;
         font-weight: bold;
         color: white !important;
-        border: none;
-        box-shadow: 0px 2px 5px rgba(0,0,0,0.2);
-        padding: 0 !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
     }
+    div.stButton > button:hover { background: rgba(255,255,255,0.1) !important; }
     
-    /* فالتو گیپ ختم کرنا */
-    [data-testid="column"] { padding: 0 2px !important; }
+    /* مخصوص رنگ (Deep Colors) */
+    .row-green { background: #1b5e20; } /* Profit & Entry */
+    .row-purple { background: #4a148c; } /* Repairing & Credit */
+    .row-orange { background: #e65100; } /* Banking & History */
+    .row-red { background: #b71c1c; }    /* Expense & Home */
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو (انتہائی چھوٹا)
-cl1, cl2, cl3 = st.columns([1, 0.4, 1])
+# 3. لوگو
+cl1, cl2, cl3 = st.columns([1, 0.5, 1])
 with cl2:
     if os.path.exists("logo.png"): st.image("logo.png", use_container_width=True)
 
 # 4. ڈیٹا لوڈنگ
-DATA_FILE = "ali_shop_compact_v12.csv"
+DATA_FILE = "ali_shop_split_v13.csv"
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
@@ -68,43 +74,43 @@ def nav(p): st.session_state.page = p
 # 5. ڈیٹا کیلکولیشن
 today = datetime.now().date()
 t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
-p_t = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
-s_t = t_df[t_df['کیٹیگری']!="Home Expense"]['فروخت'].sum()
-h_t = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
-u_t = t_df[t_df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
-rep_t = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
-bank_t = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
+cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
+he = t_df[t_df['کیٹیگری']=="Home Expense"]['فروخت'].sum()
+ut = t_df[t_df['اسٹیٹس']=="ادھار"]['فروخت'].sum()
+rep = t_df[t_df['کیٹیگری']=="Repairing"]['منافع'].sum()
+bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
 
-# --- 10 کلر فل ٹائلز گرڈ (4 Columns per row) ---
+# --- سپلٹ ٹائل ڈیزائن (4 Rows) ---
 
-# پہلی لائن: حساب کتاب
-r1_c1, r1_c2, r1_c3, r1_c4 = st.columns(4)
-with r1_c1: st.markdown(f"<div class='tile' style='background:#1b5e20;'><div class='t-label'>پرافٹ</div><div class='t-val'>{p_t}</div></div>", unsafe_allow_html=True)
-with r1_c2: st.markdown(f"<div class='tile' style='background:#0d47a1;'><div class='t-label'>کل سیل</div><div class='t-val'>{s_t}</div></div>", unsafe_allow_html=True)
-with r1_c3: st.markdown(f"<div class='tile' style='background:#b71c1c;'><div class='t-label'>گھر خرچ</div><div class='t-val'>{h_t}</div></div>", unsafe_allow_html=True)
-with r1_c4: st.markdown(f"<div class='tile' style='background:#e65100;'><div class='t-label'>ادھار</div><div class='t-val'>{u_t}</div></div>", unsafe_allow_html=True)
-
-# دوسری لائن: مخصوص ڈبے اور بٹن
-r2_c1, r2_c2, r2_c3, r2_c4 = st.columns(4)
-with r2_c1: st.markdown(f"<div class='tile' style='background:#4a148c;'><div class='t-label'>ریپیرنگ</div><div class='t-val'>{rep_t}</div></div>", unsafe_allow_html=True)
-with r2_c2: st.markdown(f"<div class='tile' style='background:#fbc02d;'><div class='t-label' style='color:black;'>بینکنگ</div><div class='t-val' style='color:black;'>{bank_t}</div></div>", unsafe_allow_html=True)
-with r2_c3: 
+# Row 1: Profit | New Entry (Green)
+c1_left, c1_right = st.columns([1.5, 1])
+with c1_left:
+    st.markdown(f"<div class='split-card row-green'><div class='left-side'><div class='m-label'>کل نقد پرافٹ</div><div class='m-val'>{cp}</div></div><div class='divider'></div></div>", unsafe_allow_html=True)
+with c1_right:
     if st.button("➕ ENTRY", key="e"): nav("new")
-    st.markdown("<style>button[key='e'] { background: #c2185b !important; }</style>", unsafe_allow_html=True)
-with r2_c4: 
+
+# Row 2: Repairing | Credit List (Purple)
+c2_left, c2_right = st.columns([1.5, 1])
+with c2_left:
+    st.markdown(f"<div class='split-card row-purple'><div class='left-side'><div class='m-label'>ریپیرنگ پرافٹ</div><div class='m-val'>{rep}</div></div><div class='divider'></div></div>", unsafe_allow_html=True)
+with c2_right:
     if st.button("📓 CREDIT", key="c"): nav("credit")
-    st.markdown("<style>button[key='c'] { background: #5d4037 !important; }</style>", unsafe_allow_html=True)
 
-# تیسری لائن: ہسٹری اور ہوم
-r3_c1, r3_c2, r3_c3, r3_c4 = st.columns(4)
-with r3_c1: 
+# Row 3: Banking | History (Orange)
+c3_left, c3_right = st.columns([1.5, 1])
+with c3_left:
+    st.markdown(f"<div class='split-card row-orange'><div class='left-side'><div class='m-label'>ایزی پیسہ سیل</div><div class='m-val'>{bank}</div></div><div class='divider'></div></div>", unsafe_allow_html=True)
+with c3_right:
     if st.button("📅 HISTORY", key="h"): nav("history")
-    st.markdown("<style>button[key='h'] { background: #00796b !important; }</style>", unsafe_allow_html=True)
-with r3_c2: 
-    if st.button("🏠 HOME", key="hm"): nav("home")
-    st.markdown("<style>button[key='hm'] { background: #455a64 !important; }</style>", unsafe_allow_html=True)
 
-st.write("---")
+# Row 4: Home Expense | Home (Red)
+c4_left, c4_right = st.columns([1.5, 1])
+with c4_left:
+    st.markdown(f"<div class='split-card row-red'><div class='left-side'><div class='m-label'>گھر کا خرچ</div><div class='m-val'>{he}</div></div><div class='divider'></div></div>", unsafe_allow_html=True)
+with c4_right:
+    if st.button("🏠 HOME", key="hm"): nav("home")
+
+st.divider()
 
 # 6. پیجز کا ڈیٹا
 if st.session_state.page == "home":
@@ -113,14 +119,14 @@ if st.session_state.page == "home":
 
 elif st.session_state.page == "new":
     st.subheader("📝 نئی انٹری")
-    with st.form("vip_form"):
+    with st.form("vip_f"):
         cat = st.selectbox("کیٹیگری", ["Accessories", "Repairing", "Banking", "Home Expense"])
         det = st.text_input("تفصیل")
         pay = st.radio("ادائیگی", ["نقد", "ادھار"], horizontal=True) if cat != "Home Expense" else "نقد"
         cx, sx = st.columns(2)
         cost = cx.number_input("لاگت", min_value=0)
         sale = sx.number_input("وصولی", min_value=0)
-        if st.form_submit_button("سیو کریں"):
+        if st.form_submit_button("محفوظ کریں"):
             p = 0 if cat == "Home Expense" else (sale - cost)
             nr = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": cost, "فروخت": sale, "منافع": p, "اسٹیٹس": pay}
             df = pd.concat([df, pd.DataFrame([nr])], ignore_index=True)
