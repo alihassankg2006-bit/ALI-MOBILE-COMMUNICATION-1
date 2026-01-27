@@ -149,6 +149,30 @@ st.markdown("""
             font-size: 14px;
         }
     }
+    
+    /* چھوٹے بٹنوں کو مکمل طور پر ختم کریں */
+    div.stButton > button {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        width: 0 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border: none !important;
+    }
+    
+    /* صرف فارم کے submit بٹنز دکھائیں */
+    form button {
+        display: flex !important;
+        visibility: visible !important;
+        height: auto !important;
+        width: auto !important;
+    }
+    
+    /* کالم کے اندر کے تمام اضافی بٹن چھپائیں */
+    .stColumn > div > div > button {
+        display: none !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -201,49 +225,24 @@ bank = t_df[t_df['کیٹیگری']=="Banking"]['فروخت'].sum()
 r1_c1, r1_c2 = st.columns(2)
 
 with r1_c1: 
-    # انٹری باکس - اب یہ بٹن ہے
-    if st.button("➕\n\nنئی انٹری\n(NEW ENTRY)", key="btn_new"):
-        nav("new")
-    # CSS کے ذریعے بٹن کو باکس کی شکل دینا
+    # انٹری باکس - کلک ایبل
     st.markdown("""
-    <style>
-    button[key="btn_new"] {
-        background: linear-gradient(135deg, #4a148c 0%, #6a1b9a 100%) !important;
-        color: white !important;
-        height: 140px !important;
-        width: 100% !important;
-        border-radius: 20px !important;
-        font-size: 18px !important;
-        font-weight: 800 !important;
-        border: 2px solid #ab47bc !important;
-        box-shadow: 0px 8px 15px rgba(0,0,0,0.2) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-bottom: 15px !important;
-        white-space: pre-wrap !important;
-        line-height: 1.4 !important;
-        padding: 20px !important;
-    }
-    button[key="btn_new"]:hover {
-        transform: translateY(-5px);
-        box-shadow: 0px 12px 20px rgba(0,0,0,0.25) !important;
-        background: linear-gradient(135deg, #6a1b9a 0%, #8e24aa 100%) !important;
-    }
-    </style>
+    <div class='big-tile bg-purple' onclick="window.handleClick('new')" 
+         style="cursor: pointer; user-select: none;">
+        <div class='tile-icon'>➕</div>
+        <div class='tile-button-text'>نئی انٹری<br><small>(NEW ENTRY)</small></div>
+    </div>
     """, unsafe_allow_html=True)
 
 with r1_c2: 
     # کل نقد پرافٹ
     st.markdown(f"""
-    <div class='big-tile bg-green'>
+    <div class='big-tile bg-green' onclick="window.handleClick('profit_details')"
+         style="cursor: pointer; user-select: none;">
         <div class='tile-name'>کل نقد پرافٹ</div>
         <div class='tile-data'>{cp}</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="profit_btn"):
-        nav("profit_details")
 
 # دوسری قطار: ریپیرنگ اور کریڈٹ
 r2_c1, r2_c2 = st.columns(2)
@@ -251,45 +250,21 @@ r2_c1, r2_c2 = st.columns(2)
 with r2_c1: 
     # ریپیرنگ پرافٹ
     st.markdown(f"""
-    <div class='big-tile bg-blue'>
+    <div class='big-tile bg-blue' onclick="window.handleClick('repair_details')"
+         style="cursor: pointer; user-select: none;">
         <div class='tile-name'>ریپیرنگ پرافٹ</div>
         <div class='tile-data'>{rep}</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="repair_btn"):
-        nav("repair_details")
 
 with r2_c2: 
     # کریڈٹ لسٹ
-    if st.button("📓\n\nادھار لسٹ\n(CREDIT LIST)", key="btn_credit"):
-        nav("credit")
     st.markdown("""
-    <style>
-    button[key="btn_credit"] {
-        background: linear-gradient(135deg, #006064 0%, #00838f 100%) !important;
-        color: white !important;
-        height: 140px !important;
-        width: 100% !important;
-        border-radius: 20px !important;
-        font-size: 18px !important;
-        font-weight: 800 !important;
-        border: 2px solid #26a69a !important;
-        box-shadow: 0px 8px 15px rgba(0,0,0,0.2) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-bottom: 15px !important;
-        white-space: pre-wrap !important;
-        line-height: 1.4 !important;
-        padding: 20px !important;
-    }
-    button[key="btn_credit"]:hover {
-        transform: translateY(-5px);
-        box-shadow: 0px 12px 20px rgba(0,0,0,0.25) !important;
-        background: linear-gradient(135deg, #00838f 0%, #0097a7 100%) !important;
-    }
-    </style>
+    <div class='big-tile bg-teal' onclick="window.handleClick('credit')"
+         style="cursor: pointer; user-select: none;">
+        <div class='tile-icon'>📓</div>
+        <div class='tile-button-text'>ادھار لسٹ<br><small>(CREDIT LIST)</small></div>
+    </div>
     """, unsafe_allow_html=True)
 
 # تیسری قطار: ایزی پیسہ اور ہسٹری
@@ -298,45 +273,21 @@ r3_c1, r3_c2 = st.columns(2)
 with r3_c1: 
     # ایزی پیسہ سیل
     st.markdown(f"""
-    <div class='big-tile bg-orange'>
+    <div class='big-tile bg-orange' onclick="window.handleClick('banking_details')"
+         style="cursor: pointer; user-select: none;">
         <div class='tile-name'>ایزی پیسہ سیل</div>
         <div class='tile-data'>{bank}</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="banking_btn"):
-        nav("banking_details")
 
 with r3_c2: 
     # ہسٹری
-    if st.button("📅\n\nمکمل ہسٹری\n(HISTORY)", key="btn_hist"):
-        nav("history")
     st.markdown("""
-    <style>
-    button[key="btn_hist"] {
-        background: linear-gradient(135deg, #c2185b 0%, #ad1457 100%) !important;
-        color: white !important;
-        height: 140px !important;
-        width: 100% !important;
-        border-radius: 20px !important;
-        font-size: 18px !important;
-        font-weight: 800 !important;
-        border: 2px solid #ec407a !important;
-        box-shadow: 0px 8px 15px rgba(0,0,0,0.2) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-bottom: 15px !important;
-        white-space: pre-wrap !important;
-        line-height: 1.4 !important;
-        padding: 20px !important;
-    }
-    button[key="btn_hist"]:hover {
-        transform: translateY(-5px);
-        box-shadow: 0px 12px 20px rgba(0,0,0,0.25) !important;
-        background: linear-gradient(135deg, #ad1457 0%, #d81b60 100%) !important;
-    }
-    </style>
+    <div class='big-tile bg-pink' onclick="window.handleClick('history')"
+         style="cursor: pointer; user-select: none;">
+        <div class='tile-icon'>📅</div>
+        <div class='tile-button-text'>مکمل ہسٹری<br><small>(HISTORY)</small></div>
+    </div>
     """, unsafe_allow_html=True)
 
 # چوتھی قطار: گھر کا خرچ اور ہوم
@@ -345,80 +296,148 @@ r4_c1, r4_c2 = st.columns(2)
 with r4_c1: 
     # گھر کا خرچ
     st.markdown(f"""
-    <div class='big-tile bg-red'>
+    <div class='big-tile bg-red' onclick="window.handleClick('expense_details')"
+         style="cursor: pointer; user-select: none;">
         <div class='tile-name'>گھر کا خرچ</div>
         <div class='tile-data'>{he}</div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("", key="expense_btn"):
-        nav("expense_details")
 
 with r4_c2: 
     # ہوم پیج
-    if st.button("🏠\n\nہوم پیج\n(HOME)", key="btn_home"):
-        nav("home")
     st.markdown("""
-    <style>
-    button[key="btn_home"] {
-        background: linear-gradient(135deg, #263238 0%, #37474f 100%) !important;
-        color: white !important;
-        height: 140px !important;
-        width: 100% !important;
-        border-radius: 20px !important;
-        font-size: 18px !important;
-        font-weight: 800 !important;
-        border: 2px solid #78909c !important;
-        box-shadow: 0px 8px 15px rgba(0,0,0,0.2) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin-bottom: 15px !important;
-        white-space: pre-wrap !important;
-        line-height: 1.4 !important;
-        padding: 20px !important;
-    }
-    button[key="btn_home"]:hover {
-        transform: translateY(-5px);
-        box-shadow: 0px 12px 20px rgba(0,0,0,0.25) !important;
-        background: linear-gradient(135deg, #37474f 0%, #455a64 100%) !important;
-    }
-    </style>
+    <div class='big-tile bg-slate' onclick="window.handleClick('home')"
+         style="cursor: pointer; user-select: none;">
+        <div class='tile-icon'>🏠</div>
+        <div class='tile-button-text'>ہوم پیج<br><small>(HOME)</small></div>
+    </div>
     """, unsafe_allow_html=True)
 
-# چھوٹے سفید بٹنوں کو چھپانے کے لیے CSS
+# --- Streamlit کے لیے فنکشنل بٹن (خفیہ) ---
+# یہ بٹن نظر نہیں آئیں گے لیکن کام کریں گے
+
+# خفیہ کالم جہاں تمام بٹنز چھپے ہوں گے
+with st.container():
+    # ان تمام بٹنوں کو ایک ہی جگہ پر رکھیں اور چھپائیں
+    if st.button("", key="hidden_new", help=""):
+        nav("new")
+    if st.button("", key="hidden_profit", help=""):
+        nav("profit_details")
+    if st.button("", key="hidden_repair", help=""):
+        nav("repair_details")
+    if st.button("", key="hidden_credit", help=""):
+        nav("credit")
+    if st.button("", key="hidden_banking", help=""):
+        nav("banking_details")
+    if st.button("", key="hidden_history", help=""):
+        nav("history")
+    if st.button("", key="hidden_expense", help=""):
+        nav("expense_details")
+    if st.button("", key="hidden_home", help=""):
+        nav("home")
+
+# JavaScript for click handling - بڑے باکسوں پر کلک کے لیے
+st.markdown("""
+<script>
+// باکس پر کلک کرنے کا فنکشن
+window.handleClick = function(pageName) {
+    console.log('Clicked on:', pageName);
+    
+    // Streamlit کے ساتھ بات چیت کے لیے
+    try {
+        // خفیہ بٹن پر کلک کا سیمولیشن
+        const buttonId = 'hidden_' + pageName;
+        const button = document.querySelector(`button[key="${buttonId}"]`);
+        
+        if (button) {
+            console.log('Found button:', buttonId);
+            button.click();
+        } else {
+            console.log('Button not found:', buttonId);
+            // Alternative method
+            window.location.href = window.location.href.split('?')[0] + '?page=' + pageName;
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        window.location.href = window.location.href.split('?')[0] + '?page=' + pageName;
+    }
+}
+
+// صفحہ لوڈ ہونے پر کلک ایونٹس شامل کریں
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, adding click events...');
+    
+    // تمام بڑے ڈبوں پر کلک ایونٹ شامل کریں
+    const tiles = document.querySelectorAll('.big-tile');
+    tiles.forEach(tile => {
+        tile.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // onclick attribute سے صفحہ کا نام حاصل کریں
+            const onclickAttr = this.getAttribute('onclick');
+            if (onclickAttr) {
+                const match = onclickAttr.match(/handleClick\\('(.*?)'\\)/);
+                if (match && match[1]) {
+                    const pageName = match[1];
+                    console.log('Tile clicked, navigating to:', pageName);
+                    window.handleClick(pageName);
+                }
+            }
+        });
+    });
+    
+    // خفیہ بٹنوں کو چھپائیں
+    const hiddenButtons = document.querySelectorAll('button[key^="hidden_"]');
+    hiddenButtons.forEach(button => {
+        button.style.display = 'none';
+        button.style.visibility = 'hidden';
+        button.style.position = 'absolute';
+        button.style.left = '-9999px';
+    });
+});
+</script>
+""", unsafe_allow_html=True)
+
+# اضافی CSS چھوٹے بٹنوں کو مکمل طور پر ہٹانے کے لیے
 st.markdown("""
 <style>
-/* صرف چھوٹے سفید بٹنوں کو چھپائیں جو ڈیٹا والے باکس کے نیچے ہیں */
-div[data-testid="column"] button[kind="secondary"],
-div[data-testid="column"] button:not([key^="btn_"]) {
+/* تمام اضافی سفید بٹنوں کو مکمل طور پر ختم کریں */
+button[kind="secondary"], 
+button[kind="primary"]:not(form button),
+div[data-testid="column"] button,
+div[data-testid="stHorizontalBlock"] button {
     display: none !important;
     visibility: hidden !important;
-    height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
     width: 0 !important;
+    height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
     opacity: 0 !important;
-    position: absolute !important;
-    left: -9999px !important;
+    pointer-events: none !important;
 }
 
-/* بڑے رنگین بٹنز (btn_ والے) دکھائیں */
-button[key^="btn_"] {
+/* صرف فارم کے بٹنز اور مینو بٹنز دکھائیں */
+form button,
+.stForm button,
+div[role="button"]:not([class*="big-tile"]) {
     display: flex !important;
     visibility: visible !important;
-}
-
-/* بڑے ڈیٹا والے باکس کے نیچے چھوٹے بٹن چھپائیں */
-div[data-testid="column"] div:has(+ button:not([key^="btn_"])) + button:not([key^="btn_"]) {
-    display: none !important;
+    position: relative !important;
+    left: auto !important;
+    width: auto !important;
+    height: auto !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
 }
 </style>
 """, unsafe_allow_html=True)
 
 st.divider()
 
-# 6. پیجز کی تفصیل - اب سب کام کریں گے!
+# 6. پیجز کی تفصیل
 if st.session_state.page == "home":
     st.subheader("📋 آج کی کارکردگی")
     if not t_df.empty:
@@ -518,24 +537,6 @@ elif st.session_state.page == "repair_details":
     else:
         st.info("آج کے لیے کوئی ریپیرنگ پرافٹ نہیں ہے۔")
 
-elif st.session_state.page == "expense_details":
-    st.subheader("🏠 گھر کے خرچ کی تفصیلات")
-    expense_df = t_df[t_df['کیٹیگری'] == "Home Expense"]
-    if not expense_df.empty:
-        st.dataframe(expense_df, use_container_width=True)
-        st.metric("کل گھر کا خرچ", f"₹{he}")
-    else:
-        st.info("آج کے لیے کوئی گھر کا خرچ نہیں ہے۔")
-
-elif st.session_state.page == "banking_details":
-    st.subheader("💰 ایزی پیسہ سیلز کی تفصیلات")
-    banking_df = t_df[t_df['کیٹیگری'] == "Banking"]
-    if not banking_df.empty:
-        st.dataframe(banking_df, use_container_width=True)
-        st.metric("کل ایزی پیسہ سیلز", f"₹{bank}")
-    else:
-        st.info("آج کے لیے کوئی ایزی پیسہ سیلز نہیں ہیں۔")
-
 # فوٹر
 st.markdown("---")
 st.markdown(
@@ -543,4 +544,4 @@ st.markdown(
     "© 2024 Ali Mobiles & Communication | Premium Shop Management System"
     "</p>",
     unsafe_allow_html=True
-        )
+)
