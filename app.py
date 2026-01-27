@@ -6,62 +6,73 @@ import os
 # 1. ایپ کی بنیادی سیٹنگ
 st.set_page_config(page_title="Ali Mobiles & Communication", layout="wide")
 
-# 2. وی آئی پی کومپیکٹ ڈیزائن (CSS)
+# 2. وی آئی پی ایکول گرڈ ڈیزائن (CSS)
 st.markdown("""
     <style>
+    /* فالتو سفید جگہ ختم کرنا */
+    .block-container { padding-top: 0.5rem !important; padding-bottom: 0rem !important; }
     .stApp { background-color: #ffffff; }
     
-    /* فالتو جگہ ختم کرنا */
-    .block-container { padding-top: 1rem !important; padding-bottom: 0rem !important; }
-    
     /* ڈیش بورڈ ڈبوں کا ڈیزائن */
-    .metric-card {
+    .tile {
         color: white !important;
-        padding: 12px;
-        border-radius: 12px;
+        padding: 15px 5px;
+        border-radius: 10px;
         text-align: center;
-        margin-bottom: 2px; /* نیچے والے بٹن کے ساتھ جوڑنے کے لیے */
-        box-shadow: 0px 4px 6px rgba(0,0,0,0.1);
+        margin-bottom: 5px;
+        height: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
     }
-    .m-title { font-size: 12px; font-weight: bold; opacity: 0.9; text-transform: uppercase; margin-bottom: 5px; }
-    .m-val { font-size: 24px; font-weight: 900; }
+    .tile-title { font-size: 11px; font-weight: bold; text-transform: uppercase; margin-bottom: 5px; }
+    .tile-val { font-size: 22px; font-weight: 900; }
 
-    /* مینیو بٹنوں کا ڈیزائن */
+    /* بٹنوں کا ڈیزائن (بالکل ڈبوں کے برابر) */
     div.stButton > button {
-        height: 80px !important; /* اونچائی کم کی تاکہ سب اوپر نظر آئے */
+        height: 80px !important;
         width: 100%;
-        border-radius: 12px;
+        border-radius: 10px;
         font-size: 18px;
         font-weight: bold;
         color: white !important;
-        border: 2px solid rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
         box-shadow: 0px 4px 8px rgba(0,0,0,0.2);
         margin-top: 0px;
+        text-transform: uppercase;
     }
     
-    /* بٹنوں کے گہرے رنگ */
-    /* Column 1 Button - Deep Red */
-    div[data-testid="column"]:nth-of-type(1) button { background: #b71c1c !important; }
-    /* Column 2 Button - Deep Purple */
-    div[data-testid="column"]:nth-of-type(2) button { background: #4a148c !important; }
-    /* Column 3 Button - Deep Green */
-    div[data-testid="column"]:nth-of-type(3) button { background: #1b5e20 !important; }
-    /* Column 4 Button - Deep Blue */
-    div[data-testid="column"]:nth-of-type(4) button { background: #0d47a1 !important; }
+    /* کالمز کے انفرادی گہرے رنگ (حساب اور بٹن دونوں کے لیے) */
+    /* Column 1: Deep Green */
+    [data-testid="column"]:nth-of-type(1) .tile { background: #1b5e20 !important; }
+    [data-testid="column"]:nth-of-type(1) button { background: #1b5e20 !important; }
+    
+    /* Column 2: Deep Red */
+    [data-testid="column"]:nth-of-type(2) .tile { background: #b71c1c !important; }
+    [data-testid="column"]:nth-of-type(2) button { background: #b71c1c !important; }
+    
+    /* Column 3: Deep Orange */
+    [data-testid="column"]:nth-of-type(3) .tile { background: #e65100 !important; }
+    [data-testid="column"]:nth-of-type(3) button { background: #e65100 !important; }
+    
+    /* Column 4: Deep Blue */
+    [data-testid="column"]:nth-of-type(4) .tile { background: #0d47a1 !important; }
+    [data-testid="column"]:nth-of-type(4) button { background: #0d47a1 !important; }
 
-    /* ڈیٹا ٹیبل ڈیزائن */
-    .stDataFrame { border: 1px solid #ddd; border-radius: 10px; margin-top: 15px; }
+    /* فارم اور ٹیبل کو صاف دکھانا */
+    .stForm { background: #f8f9fa; padding: 15px; border-radius: 15px; border: 1px solid #ddd; }
     </style>
     """, unsafe_allow_html=True)
 
-# 3. لوگو (چھوٹا اور سینٹرڈ)
-col_l, col_m, col_r = st.columns([1, 0.8, 1])
-with col_m:
+# 3. لوگو (انتہائی کومپیکٹ)
+c_l, c_m, c_r = st.columns([1, 0.6, 1])
+with c_m:
     if os.path.exists("logo.png"):
         st.image("logo.png", use_container_width=True)
 
 # 4. ڈیٹا مینجمنٹ
-DATA_FILE = "ali_shop_v11_compact.csv"
+DATA_FILE = "ali_shop_equal_grid.csv"
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE)
@@ -73,52 +84,51 @@ df = load_data()
 if 'page' not in st.session_state: st.session_state.page = "home"
 def nav(p): st.session_state.page = p
 
-# 5. اٹیچڈ گرڈ (حساب کتاب + بٹن ایک ہی ساتھ)
+# 5. ایکول گرڈ (حساب کتاب + بٹن)
 today = datetime.now().date()
 t_df = df[df['تاریخ'].dt.date == today] if not df.empty else df
 
-# ڈیٹا نکالنا
 cp = t_df[(t_df['اسٹیٹس']=="نقد") & (t_df['کیٹیگری']!="Home Expense")]['منافع'].sum()
 he = t_df[t_df['کیٹیگری'] == "Home Expense"]['فروخت'].sum()
 ut = t_df[t_df['اسٹیٹس'] == "ادھار"]['فروخت'].sum()
 sv = cp - he
 
-# گرڈ بنانا
-c1, c2, c3, c4 = st.columns(4)
+# گرڈ کا ڈھانچہ
+col1, col2, col3, col4 = st.columns(4)
 
-# پہلی لائن (حساب کتاب)
-with c1: st.markdown(f"<div class='metric-card' style='background:#1b5e20;'><div class='m-title'>نقد پرافٹ</div><div class='m-val'>{cp}</div></div>", unsafe_allow_html=True)
-with c2: st.markdown(f"<div class='metric-card' style='background:#b71c1c;'><div class='m-title'>گھر کا خرچ</div><div class='m-val'>{he}</div></div>", unsafe_allow_html=True)
-with c3: st.markdown(f"<div class='metric-card' style='background:#e65100;'><div class='m-title'>آج ادھار</div><div class='m-val'>{ut}</div></div>", unsafe_allow_html=True)
-with c4: st.markdown(f"<div class='metric-card' style='background:#0d47a1;'><div class='m-title'>خالص بچت</div><div class='m-val'>{sv}</div></div>", unsafe_allow_html=True)
+# پہلی لائن (حساب کتاب کے ڈبے)
+with col1: st.markdown(f"<div class='tile'><div class='tile-title'>نقد پرافٹ</div><div class='tile-val'>{cp}</div></div>", unsafe_allow_html=True)
+with col2: st.markdown(f"<div class='tile'><div class='tile-title'>گھر کا خرچ</div><div class='tile-val'>{he}</div></div>", unsafe_allow_html=True)
+with col3: st.markdown(f"<div class='tile'><div class='tile-title'>آج ادھار</div><div class='tile-val'>{ut}</div></div>", unsafe_allow_html=True)
+with col4: st.markdown(f"<div class='tile'><div class='tile-title'>خالص بچت</div><div class='tile-val'>{sv}</div></div>", unsafe_allow_html=True)
 
-# دوسری لائن (بٹن - بالکل نیچے اٹیچڈ)
-with c1: 
-    if st.button("➕ Entry", key="e"): nav("new")
-with c2: 
-    if st.button("📓 Credit", key="c"): nav("credit")
-with c3: 
-    if st.button("📅 History", key="h"): nav("history")
-with c4: 
-    if st.button("🏠 Home", key="hm"): nav("home")
+# دوسری لائن (بٹنز - بالکل برابر نیچے)
+with col1: 
+    if st.button("➕ ENTRY", key="e"): nav("new")
+with col2: 
+    if st.button("📓 CREDIT", key="c"): nav("credit")
+with col3: 
+    if st.button("📅 HISTORY", key="h"): nav("history")
+with col4: 
+    if st.button("🏠 HOME", key="hm"): nav("home")
 
-st.divider()
+st.write("---")
 
-# 6. پیجز کی تفصیل
+# 6. پیجز (جو بٹن دبانے پر نیچے کھلیں گے)
 if st.session_state.page == "home":
-    st.subheader("📋 آج کا ریکارڈ")
+    st.subheader("📋 آج کی سیل")
     st.dataframe(t_df, use_container_width=True)
 
 elif st.session_state.page == "new":
     st.subheader("📝 نئی انٹری")
-    with st.form("f", clear_on_submit=True):
+    with st.form("entry_form", clear_on_submit=True):
         cat = st.selectbox("کیٹیگری", ["Accessories", "Repairing", "Banking", "Home Expense"])
         det = st.text_input("تفصیل")
         stat = st.radio("ادائیگی", ["نقد", "ادھار"], horizontal=True) if cat != "Home Expense" else "نقد"
-        cx, sx = st.columns(2)
-        cost = cx.number_input("لاگت (Cost)", min_value=0)
-        sale = sx.number_input("وصولی (Sale)", min_value=0)
-        if st.form_submit_button("محفوظ کریں"):
+        ca, sa = st.columns(2)
+        cost = ca.number_input("خریداری (Cost)", min_value=0)
+        sale = sa.number_input("وصولی (Sale)", min_value=0)
+        if st.form_submit_button("سیو کریں 💾"):
             p = 0 if cat == "Home Expense" else (sale - cost)
             nr = {"تاریخ": datetime.now(), "کیٹیگری": cat, "تفصیل": det, "خریداری": cost, "فروخت": sale, "منافع": p, "اسٹیٹس": stat}
             df = pd.concat([df, pd.DataFrame([nr])], ignore_index=True)
