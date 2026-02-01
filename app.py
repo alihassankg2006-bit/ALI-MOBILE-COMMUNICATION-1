@@ -8,7 +8,7 @@ from datetime import datetime
 # --- Page Configuration ---
 st.set_page_config(page_title="Ali Mobiles & Communication", page_icon="📱", layout="wide")
 
-# Custom Styling (Professional Dark Theme)
+# Custom Styling (Professional Look)
 st.markdown("""
     <style>
     .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #4e5d6c; }
@@ -24,17 +24,19 @@ try:
     g = Github(token)
     repo = g.get_repo(repo_name)
 except Exception:
-    st.error("Secrets Missing! Please add GITHUB_TOKEN and REPO_NAME in Streamlit Secrets.")
+    st.error("Secrets Missing! Please check GITHUB_TOKEN and REPO_NAME in Streamlit Settings.")
     st.stop()
 
-# --- Load Logo (Updated to Logo.png) ---
+# --- Load Logo (Flexible Search) ---
 def get_logo():
-    try:
-        # Aapki file ka naya naam
-        file_content = repo.get_contents("Logo.png")
-        return file_content.download_url
-    except:
-        return None
+    # Yeh function ab 'logo.png' aur 'Logo.png' dono ko check karega
+    for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
+        try:
+            file_content = repo.get_contents(name)
+            return file_content.download_url
+        except:
+            continue
+    return None
 
 logo_url = get_logo()
 
@@ -95,13 +97,12 @@ if menu == "📝 Nayi Entry":
                 profit = sale - cost
                 new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=df.columns)
                 df = pd.concat([df, new_row], ignore_index=True)
-                # Date format consistent rakhne ke liye
                 df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
                 save_data(df, current_sha, f"Added: {item}")
                 st.success("✅ Record saved successfully!")
                 st.rerun()
 
-# --- 2. DASHBOARD (Monthly Focus) ---
+# --- 2. DASHBOARD ---
 elif menu == "📊 Dashboard (Monthly)":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
@@ -109,7 +110,6 @@ elif menu == "📊 Dashboard (Monthly)":
         df_today = df[df['Date'].dt.date == now.date()]
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
 
-        # Monthly Target (60,000)
         target = 60000
         m_profit = df_month['Profit'].sum()
         progress = min(m_profit / target, 1.0)
@@ -118,7 +118,6 @@ elif menu == "📊 Dashboard (Monthly)":
             <div class="target-card">
                 <h3 style='margin:0;'>🎯 Monthly Profit Target ({now.strftime('%B')})</h3>
                 <h1 style='margin:10px 0;'>Rs. {m_profit:,.0f} / {target:,}</h1>
-                <p>Progress: {progress*100:.1f}% | Remaining: Rs. {max(target-m_profit, 0):,.0f}</p>
             </div>
             """, unsafe_allow_html=True)
         st.progress(progress)
@@ -131,8 +130,7 @@ elif menu == "📊 Dashboard (Monthly)":
         st.markdown("---")
         st.subheader("📈 Monthly Sales Trend")
         if not df_month.empty:
-            fig = px.bar(df_month.groupby('Date')['Sale'].sum().reset_index(), x='Date', y='Sale', 
-                         color_discrete_sequence=['#00cc66'], labels={'Sale': 'Sale (Rs)', 'Date': 'Date'})
+            fig = px.bar(df_month.groupby('Date')['Sale'].sum().reset_index(), x='Date', y='Sale', color_discrete_sequence=['#00cc66'])
             st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Is mahine ka abhi tak koi record nahi hai.")
@@ -144,7 +142,6 @@ elif menu == "📂 Yearly Archive":
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
         archive = df.groupby('Month_Year').agg({'Sale':'sum', 'Profit':'sum', 'Item':'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
         st.table(archive)
-        
         selected = st.selectbox("Details dekhne ke liye mahina select karein:", archive['Month_Year'].unique())
         st.dataframe(df[df['Month_Year'] == selected].drop(columns=['Month_Year']), use_container_width=True)
 
@@ -157,5 +154,6 @@ elif menu == "⚙️ Manage Records":
         df = df.drop(df.index[idx])
         df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
         save_data(df, current_sha, "Deleted Entry")
-        st.warning("Record deleted!")
+        st.warning("Entry removed!")
         st.rerun()
+                                   
