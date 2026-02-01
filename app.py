@@ -29,19 +29,17 @@ except Exception:
 
 # --- Load Logo (Flexible Search) ---
 def get_logo():
-    # Yeh function ab 'logo.png' aur 'Logo.png' dono ko check karega
     for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
         try:
             file_content = repo.get_contents(name)
             return file_content.download_url
-        except:
-            continue
+        except: continue
     return None
 
 logo_url = get_logo()
 
-# --- Data Logic ---
-CSV_FILE = "sales_record.csv"
+# --- Data Logic (Now using data.csv as requested) ---
+CSV_FILE = "data.csv"
 
 def load_data():
     try:
@@ -56,10 +54,8 @@ def load_data():
 def save_data(df, sha, message="Update"):
     csv_buffer = io.StringIO()
     df.to_csv(csv_buffer, index=False)
-    if sha:
-        repo.update_file(CSV_FILE, message, csv_buffer.getvalue(), sha)
-    else:
-        repo.create_file(CSV_FILE, "Initial Record", csv_buffer.getvalue())
+    if sha: repo.update_file(CSV_FILE, message, csv_buffer.getvalue(), sha)
+    else: repo.create_file(CSV_FILE, "Initial Record", csv_buffer.getvalue())
 
 df, current_sha = load_data()
 now = datetime.now()
@@ -67,10 +63,8 @@ now = datetime.now()
 # --- Header Section ---
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
-    if logo_url:
-        st.image(logo_url, use_container_width=True)
-    else:
-        st.markdown("<h1 style='text-align: center;'>Ali Mobiles & Communication</h1>", unsafe_allow_html=True)
+    if logo_url: st.image(logo_url, use_container_width=True)
+    else: st.markdown("<h1 style='text-align: center;'>Ali Mobiles & Communication</h1>", unsafe_allow_html=True)
 
 st.markdown(f"<p style='text-align: center;'><b>آج کی تاریخ:</b> {now.strftime('%d %B, %Y')}</p>", unsafe_allow_html=True)
 st.markdown("---")
@@ -87,6 +81,8 @@ if menu == "📝 Nayi Entry":
             date = st.date_input("Tareekh", now)
             cat = st.selectbox("Category", ["Accessories", "Repairing"])
             item = st.text_input("Item Name / Kaam")
+        with col2: # Fixed small column reference
+            pass 
         with c2:
             cost = st.number_input("Khareed (Cost)", min_value=0.0)
             sale = st.number_input("Becha (Sale)", min_value=0.0)
@@ -99,7 +95,7 @@ if menu == "📝 Nayi Entry":
                 df = pd.concat([df, new_row], ignore_index=True)
                 df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
                 save_data(df, current_sha, f"Added: {item}")
-                st.success("✅ Record saved successfully!")
+                st.success("✅ Record saved successfully to data.csv!")
                 st.rerun()
 
 # --- 2. DASHBOARD ---
@@ -107,17 +103,20 @@ elif menu == "📊 Dashboard (Monthly)":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
         df['Date'] = pd.to_datetime(df['Date'])
+        # Today's data
         df_today = df[df['Date'].dt.date == now.date()]
+        # Current month's data
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
 
         target = 60000
         m_profit = df_month['Profit'].sum()
-        progress = min(m_profit / target, 1.0)
+        progress = min(m_profit / target, 1.0) if target > 0 else 0
         
         st.markdown(f"""
             <div class="target-card">
                 <h3 style='margin:0;'>🎯 Monthly Profit Target ({now.strftime('%B')})</h3>
                 <h1 style='margin:10px 0;'>Rs. {m_profit:,.0f} / {target:,}</h1>
+                <p>Progress: {progress*100:.1f}% | Remaining: Rs. {max(target-m_profit, 0):,.0f}</p>
             </div>
             """, unsafe_allow_html=True)
         st.progress(progress)
@@ -128,16 +127,16 @@ elif menu == "📊 Dashboard (Monthly)":
         col_m3.metric("Monthly Entries", len(df_month))
 
         st.markdown("---")
-        st.subheader("📈 Monthly Sales Trend")
+        st.subheader("📈 Monthly Sales Chart")
         if not df_month.empty:
-            fig = px.bar(df_month.groupby('Date')['Sale'].sum().reset_index(), x='Date', y='Sale', color_discrete_sequence=['#00cc66'])
+            chart_data = df_month.groupby('Date')['Sale'].sum().reset_index()
+            fig = px.bar(chart_data, x='Date', y='Sale', color_discrete_sequence=['#00cc66'])
             st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("Is mahine ka abhi tak koi record nahi hai.")
+    else: st.info("Abhi is mahine ka koi record nahi mila.")
 
 # --- 3. YEARLY ARCHIVE ---
 elif menu == "📂 Yearly Archive":
-    st.header("📂 Business Archive")
+    st.header("📂 Purana Monthly Record")
     if not df.empty:
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
         archive = df.groupby('Month_Year').agg({'Sale':'sum', 'Profit':'sum', 'Item':'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
@@ -147,13 +146,12 @@ elif menu == "📂 Yearly Archive":
 
 # --- 4. MANAGE RECORDS ---
 elif menu == "⚙️ Manage Records":
-    st.header("⚙️ Data Management")
+    st.header("⚙️ Edit/Delete Records")
     st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
-    idx = st.number_input("Delete Index:", min_value=0, max_value=len(df)-1 if len(df)>0 else 0, step=1)
+    idx = st.number_input("Index no. for Delete:", min_value=0, max_value=len(df)-1 if len(df)>0 else 0, step=1)
     if st.button("❌ Delete Permanently"):
         df = df.drop(df.index[idx])
         df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
-        save_data(df, current_sha, "Deleted Entry")
-        st.warning("Entry removed!")
+        save_data(df, current_sha, "Deleted")
+        st.warning("Entry deleted from data.csv!")
         st.rerun()
-                                   
