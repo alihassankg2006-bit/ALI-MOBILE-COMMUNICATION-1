@@ -119,11 +119,10 @@ if menu == "📝 Nayi Entry":
 elif menu == "📊 Dashboard":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
-        # Filter data for current month and today
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
         df_today = df[df['Date'].dt.date == now.date()]
 
-        # Target & Totals
+        # Totals
         target = 60000
         m_sale = df_month['Sale'].sum()
         m_profit = df_month['Profit'].sum()
@@ -132,12 +131,10 @@ elif menu == "📊 Dashboard":
         completion_pct = (m_profit / target) * 100 if target > 0 else 0
         remaining = target - m_profit if target > m_profit else 0
         
-        # Color Logic
         if completion_pct < 50: status_color = "#ff4b4b"
         elif completion_pct < 100: status_color = "#ffcc00"
         else: status_color = "#00cc66"
 
-        # Big Target Card
         st.markdown(f"""
             <div class="target-card" style="border-color: {status_color};">
                 <h3 style="color: #ffffff !important; margin-bottom: 5px;">🎯 Monthly Profit Target: {now.strftime('%B')}</h3>
@@ -151,7 +148,6 @@ elif menu == "📊 Dashboard":
         
         st.progress(min(m_profit/target, 1.0) if target > 0 else 0)
 
-        # Three Metrics Row
         col1, col2, col3 = st.columns(3)
         col1.metric("Monthly Total Sale", f"Rs. {m_sale:,.0f}")
         col2.metric("Today's Profit", f"Rs. {t_profit:,.0f}")
@@ -160,4 +156,33 @@ elif menu == "📊 Dashboard":
         st.markdown("---")
         if not df_month.empty:
             chart_data = df_month.groupby(df_month['Date'].dt.date)['Sale'].sum().reset_index()
-            st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', title="Daily Sales Graph", color_discrete_sequence=['#00cc6
+            # Yahan error tha, ab theek kar diya hai:
+            st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', title="Daily Sales Graph", color_discrete_sequence=['#00cc66']), use_container_width=True)
+    else: st.info("No records for this month.")
+
+# --- SECTION 3: ARCHIVE ---
+elif menu == "📂 Archive":
+    st.header("📂 Purana Monthly Record")
+    if not df.empty:
+        df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
+        summary = df.groupby('Month_Year').agg({'Sale': 'sum', 'Profit': 'sum', 'Item': 'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
+        st.table(summary)
+        sel_m = st.selectbox("Select Month for Detail:", summary['Month_Year'].unique())
+        detail_df = df[df['Month_Year'] == sel_m].sort_values(by='Date', ascending=False)
+        st.dataframe(detail_df[COLS], use_container_width=True)
+    else: st.info("Archive is empty.")
+
+# --- SECTION 4: MANAGE ---
+elif menu == "⚙️ Manage Records":
+    st.header("⚙️ Data Management")
+    if not df.empty:
+        st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
+        idx = st.number_input("Index to Delete:", 0, len(df)-1, 0)
+        if st.button("❌ Delete Permanently"):
+            df = df.drop(df.index[idx])
+            save_df = df.copy()
+            save_df['Date'] = save_df['Date'].dt.strftime('%Y-%m-%d')
+            if save_data(save_df, "Deleted"):
+                st.warning("Record Removed!")
+                st.rerun()
+                
