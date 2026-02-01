@@ -1,78 +1,76 @@
 Date,Category,Item,Cost,Sale,Profit,Payment
-2026-02-01 00:00:00,Accessories,Cover ,50.0,200.0,150.0,Cash
-2026-02-01 00:00:00,Accessories,Jazz cash ,0.0,240.0,240.0,Cash
-2026-01-31 00:00:00,Accessories,Jazcash ,0.0,200.0,200.0,Cash
-2026-01-31 00:00:00,Repairing,Juck,5.0,250.0,245.0,Cash
-2026-01-31 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-31 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-31 00:00:00,Repairing,Jazz Cash ,0.0,200.0,200.0,Cash
-2026-01-31 00:00:00,Accessories,Jazz cash ,0.0,170.0,170.0,Cash
-2026-01-31 00:00:00,Repairing,Jazz cash ,0.0,50.0,50.0,Cash
-2026-01-31 00:00:00,Accessories,Handfree,350.0,800.0,450.0,Cash
-2026-01-31 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-31 00:00:00,Accessories,Jazz Cash ,0.0,250.0,250.0,Cash
-2026-01-31 00:00:00,Accessories,Cable,80.0,250.0,170.0,Cash
-2026-01-31 00:00:00,Accessories,Cable,110.0,300.0,190.0,Cash
-2026-01-31 00:00:00,Accessories,Jazcash,0.0,70.0,70.0,Cash
-2026-01-31 00:00:00,Accessories,Jazcash,0.0,190.0,190.0,Cash
-2026-01-31 00:00:00,Accessories,Handsfree ,0.0,230.0,230.0,Cash
-2026-01-31 00:00:00,Accessories,Jazcash,0.0,10.0,10.0,Cash
-2026-01-31 00:00:00,Accessories,Jazcash ,0.0,80.0,80.0,Cash
-2026-01-31 00:00:00,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
-2026-01-31 00:00:00,Accessories,Easypaisa ,0.0,90.0,90.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,20.0,20.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
-2026-01-30 00:00:00,Repairing,Juck,20.0,700.0,680.0,Cash
-2026-01-30 00:00:00,Accessories,Cable ,80.0,250.0,170.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,180.0,180.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,200.0,200.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz Cash ,0.0,70.0,70.0,Cash
-2026-01-30 00:00:00,Accessories,Glass ,40.0,150.0,110.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,70.0,70.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,20.0,20.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz Cash ,0.0,50.0,50.0,Cash
-2026-01-30 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-29 00:00:00,Accessories,Jazz cash ,0.0,20.0,20.0,Cash
-2026-01-29 00:00:00,Accessories,Handfree ,350.0,700.0,350.0,Cash
-2026-01-29 00:00:00,Accessories,Penel ,1600.0,2500.0,900.0,Cash
-2026-01-29 00:00:00,Repairing,Penel ,1800.0,3000.0,1200.0,Cash
-2026-01-29 00:00:00,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
-2026-01-29 00:00:00,Accessories,Jazz cash ,0.0,200.0,200.0,Cash
-2026-01-29 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-29 00:00:00,Accessories,Jazzy ,0.0,40.0,40.0,Cash
-2026-01-29 00:00:00,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
-2026-01-29 00:00:00,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,60.0,60.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,80.0,80.0,Cash
-2026-01-28 00:00:00,Accessories,Cable ,100.0,310.0,210.0,Cash
-2026-01-28 00:00:00,Repairing,Penel,2150.0,2500.0,350.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
-2026-01-28 00:00:00,Repairing,Charger strip ,350.0,1000.0,650.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,250.0,250.0,Cash
-2026-01-28 00:00:00,Accessories,Jazzy ,0.0,100.0,100.0,Cash
-2026-01-28 00:00:00,Accessories,Jazz cash ,0.0,200.0,200.0,Cash
-2026-01-28 00:00:00,Accessories,Gkass,60.0,200.0,140.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,130.0,130.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,120.0,120.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,60.0,60.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,80.0,80.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,10.0,10.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,10.0,10.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz Cash ,0.0,110.0,110.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
-2026-01-27 00:00:00,Accessories,Cable ,80.0,250.0,170.0,Cash
-2026-01-27 00:00:00,Accessories,Handfree ,90.0,200.0,110.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,60.0,60.0,Cash
-2026-01-27 00:00:00,Accessories,Takq,0.0,50.0,50.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,70.0,70.0,Cash
-2026-01-27 00:00:00,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
-2026-01-27 00:00:00,Accessories,Handfree ,200.0,500.0,300.0,Cash
-2026-01-27 00:00:00,Accessories,Cable ,120.0,300.0,180.0,Cash
-2026-02-01,Accessories,Jazz cash ,0.0,120.0,120.0,Cash
+2026-02-01,Accessories,Cover ,50.0,200.0,150.0,Cash
+2026-01-31,Accessories,Jazcash ,0.0,200.0,200.0,Cash
+2026-01-31,Repairing,Juck,5.0,250.0,245.0,Cash
+2026-01-31,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-31,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-31,Repairing,Jazz Cash ,0.0,200.0,200.0,Cash
+2026-01-31,Accessories,Jazz cash ,0.0,170.0,170.0,Cash
+2026-01-31,Repairing,Jazz cash ,0.0,50.0,50.0,Cash
+2026-01-31,Accessories,Handfree,350.0,800.0,450.0,Cash
+2026-01-31,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-31,Accessories,Jazz Cash ,0.0,250.0,250.0,Cash
+2026-01-31,Accessories,Cable,80.0,250.0,170.0,Cash
+2026-01-31,Accessories,Cable,110.0,300.0,190.0,Cash
+2026-01-31,Accessories,Jazcash,0.0,70.0,70.0,Cash
+2026-01-31,Accessories,Jazcash,0.0,190.0,190.0,Cash
+2026-01-31,Accessories,Handsfree ,0.0,230.0,230.0,Cash
+2026-01-31,Accessories,Jazcash,0.0,10.0,10.0,Cash
+2026-01-31,Accessories,Jazcash ,0.0,80.0,80.0,Cash
+2026-01-31,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
+2026-01-31,Accessories,Easypaisa ,0.0,90.0,90.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,20.0,20.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
+2026-01-30,Repairing,Juck,20.0,700.0,680.0,Cash
+2026-01-30,Accessories,Cable ,80.0,250.0,170.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,180.0,180.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,200.0,200.0,Cash
+2026-01-30,Accessories,Jazz Cash ,0.0,70.0,70.0,Cash
+2026-01-30,Accessories,Glass ,40.0,150.0,110.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,70.0,70.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,20.0,20.0,Cash
+2026-01-30,Accessories,Jazz Cash ,0.0,50.0,50.0,Cash
+2026-01-30,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-29,Accessories,Jazz cash ,0.0,20.0,20.0,Cash
+2026-01-29,Accessories,Handfree ,350.0,700.0,350.0,Cash
+2026-01-29,Accessories,Penel ,1600.0,2500.0,900.0,Cash
+2026-01-29,Repairing,Penel ,1800.0,3000.0,1200.0,Cash
+2026-01-29,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
+2026-01-29,Accessories,Jazz cash ,0.0,200.0,200.0,Cash
+2026-01-29,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-29,Accessories,Jazzy ,0.0,40.0,40.0,Cash
+2026-01-29,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
+2026-01-29,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,60.0,60.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,80.0,80.0,Cash
+2026-01-28,Accessories,Cable ,100.0,310.0,210.0,Cash
+2026-01-28,Repairing,Penel,2150.0,2500.0,350.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
+2026-01-28,Repairing,Charger strip ,350.0,1000.0,650.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,250.0,250.0,Cash
+2026-01-28,Accessories,Jazzy ,0.0,100.0,100.0,Cash
+2026-01-28,Accessories,Jazz cash ,0.0,200.0,200.0,Cash
+2026-01-28,Accessories,Gkass,60.0,200.0,140.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,130.0,130.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,120.0,120.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,60.0,60.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,80.0,80.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,10.0,10.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,10.0,10.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,30.0,30.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-27,Accessories,Jazz Cash ,0.0,110.0,110.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,50.0,50.0,Cash
+2026-01-27,Accessories,Cable ,80.0,250.0,170.0,Cash
+2026-01-27,Accessories,Handfree ,90.0,200.0,110.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,60.0,60.0,Cash
+2026-01-27,Accessories,Takq,0.0,50.0,50.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,100.0,100.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,70.0,70.0,Cash
+2026-01-27,Accessories,Jazz cash ,0.0,40.0,40.0,Cash
+2026-01-27,Accessories,Handfree ,200.0,500.0,300.0,Cash
+2026-01-27,Accessories,Cable ,120.0,300.0,180.0,Cash
