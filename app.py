@@ -1,101 +1,110 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from github import Github
-import io
+import os
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 from datetime import datetime
 
 # --- Page Configuration ---
 st.set_page_config(page_title="Ali Mobiles & Communication", page_icon="📱", layout="wide")
 
-# Custom Styling
+# --- Styling ---
 st.markdown("""
     <style>
     .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #4e5d6c; }
     .target-card { background-color: #1e2130; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid #00cc66; margin-bottom: 20px; }
-    .today-card { background-color: #262730; padding: 15px; border-radius: 10px; border-left: 5px solid #00cc66; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- GitHub Auth ---
-try:
-    token = st.secrets["GITHUB_TOKEN"]
-    repo_name = st.secrets["REPO_NAME"]
-    g = Github(token)
-    repo = g.get_repo(repo_name)
-except Exception:
-    st.error("Secrets Missing! Check GITHUB_TOKEN and REPO_NAME.")
-    st.stop()
-
-# --- Load Data Logic ---
+# --- Data File Logic ---
 CSV_FILE = "sales_record.csv"
 
 def load_data():
-    try:
-        contents = repo.get_contents(CSV_FILE)
-        data = contents.decoded_content.decode('utf-8')
-        df = pd.read_csv(io.StringIO(data))
+    if os.path.exists(CSV_FILE):
+        df = pd.read_csv(CSV_FILE)
         df['Date'] = pd.to_datetime(df['Date'])
-        return df, contents.sha
-    except:
-        cols = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
-        return pd.DataFrame(columns=cols), None
-
-def save_data(df, sha, message="Update"):
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-    if sha:
-        repo.update_file(CSV_FILE, message, csv_buffer.getvalue(), sha)
+        return df
     else:
-        repo.create_file(CSV_FILE, "Initial Record", csv_buffer.getvalue())
+        cols = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
+        return pd.DataFrame(columns=cols)
 
-df, current_sha = load_data()
+def save_data(df):
+    df.to_csv(CSV_FILE, index=False)
 
-# --- Time Logic ---
+def send_email_backup(to_email):
+    # یہ حصہ ای میل بھیجنے کے لیے ہے
+    from_email = st.secrets["MY_EMAIL"]  # اپنی ای میل یہاں سیٹ کریں
+    password = st.secrets["EMAIL_PASSWORD"] # ای میل کا ایپ پاس ورڈ
+    
+    msg = MIMEMultipart()
+    msg['From'] = from_email
+    msg['To'] = to_email
+    msg['Subject'] = f"Ali Mobiles - Sales Record Backup {datetime.now().strftime('%Y-%m-%d')}"
+    
+    body = "Assalam-o-Alaikum Ali Bhai! Attached is your business record file."
+    msg.attach(MIMEText(body, 'plain'))
+    
+    attachment = open(CSV_FILE, "rb")
+    part = MIMEBase('application', 'octet-stream')
+    part.set_payload((attachment).read())
+    encoders.encode_base64(part)
+    part.add_header('Content-Disposition', f"attachment; filename= {CSV_FILE}")
+    msg.attach(part)
+    
+    try:
+        server = smtplib.SMTP('smtp.gmail.com', 587)
+        server.starttls()
+        server.login(from_email, password)
+        text = msg.as_string()
+        server.sendmail(from_email, to_email, text)
+        server.quit()
+        return True
+    except Exception as e:
+        st.error(f"Email error: {e}")
+        return False
+
+df = load_data()
 now = datetime.now()
-today_date = now.strftime('%Y-%m-%d')
-current_month = now.month
-current_year = now.year
 
 # --- Header ---
 st.markdown("<h1 style='text-align: center; color: #00cc66;'>Ali Mobiles & Communication</h1>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center;'>آج کی تاریخ: {now.strftime('%d %B, %Y')}</p>", unsafe_allow_html=True)
 st.markdown("---")
 
 # --- Navigation ---
-menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard", "📂 Yearly Archive", "⚙️ History & Delete"])
+menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard", "📧 Email Backup"])
 
 # --- 1. NEW ENTRY ---
 if menu == "📝 Nayi Entry":
-    st.header("Nayi Entry Karein")
+    st.header("Nayi Entry")
     with st.form("entry_form", clear_on_submit=True):
         col1, col2 = st.columns(2)
         with col1:
             date = st.date_input("Tareekh", now)
             cat = st.selectbox("Category", ["Accessories", "Repairing"])
-            item = st.text_input("Item Name / Kaam")
+            item = st.text_input("Item Name")
         with col2:
-            cost = st.number_input("Khareed (Cost)", min_value=0.0)
-            sale = st.number_input("Becha (Sale)", min_value=0.0)
+            cost = st.number_input("Cost", min_value=0.0)
+            sale = st.number_input("Sale", min_value=0.0)
             pay = st.selectbox("Payment", ["Cash", "EasyPaisa", "JazzCash"])
         
-        if st.form_submit_button("💾 Save to Cloud"):
+        if st.form_submit_button("💾 Save Locally"):
             if item and sale > 0:
                 profit = sale - cost
                 new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=df.columns)
-                updated_df = pd.concat([df, new_row], ignore_index=True)
-                save_data(updated_df, current_sha, f"Added: {item}")
-                st.success("✅ Record Saved Successfully!")
+                df = pd.concat([df, new_row], ignore_index=True)
+                save_data(df)
+                st.success("✅ Record Saved!")
                 st.rerun()
 
 # --- 2. DASHBOARD ---
 elif menu == "📊 Dashboard":
     if not df.empty:
-        # Separate Data
-        df_today = df[df['Date'].dt.strftime('%Y-%m-%d') == today_date]
-        df_month = df[(df['Date'].dt.month == current_month) & (df['Date'].dt.year == current_year)]
+        df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
         
-        # --- Monthly Target Section ---
         target_profit = 60000
         month_profit = df_month['Profit'].sum()
         progress = min(month_profit / target_profit, 1.0)
@@ -104,67 +113,41 @@ elif menu == "📊 Dashboard":
             <div class="target-card">
                 <h3 style='margin:0; color:#00cc66;'>🎯 Monthly Profit Target ({now.strftime('%B')})</h3>
                 <h1 style='margin:10px 0;'>Rs. {month_profit:,.0f} / {target_profit:,}</h1>
-                <p style='color:#aaa;'>Progress: {progress*100:.1f}% | Remaining: Rs. {max(target_profit-month_profit, 0):,.0f}</p>
             </div>
             """, unsafe_allow_html=True)
         st.progress(progress)
-
-        # --- Today & Month Metrics ---
-        col_t1, col_t2 = st.columns(2)
-        with col_t1:
-            st.markdown(f"""<div class="today-card">
-                <h4 style='margin:0;'>Aaj Ki Performance (Today)</h4>
-                <h2 style='color:#00cc66;'>Sale: Rs. {df_today['Sale'].sum():,.0f}</h2>
-                <h3 style='color:#fff;'>Profit: Rs. {df_today['Profit'].sum():,.0f}</h3>
-            </div>""", unsafe_allow_html=True)
         
-        with col_t2:
-            st.markdown(f"""<div class="today-card" style="border-left: 5px solid #3498db;">
-                <h4 style='margin:0;'>Is Mahine Ki Total (Monthly)</h4>
-                <h2 style='color:#3498db;'>Sale: Rs. {df_month['Sale'].sum():,.0f}</h2>
-                <h3 style='color:#fff;'>Entries: {len(df_month)}</h3>
-            </div>""", unsafe_allow_html=True)
-
-        st.markdown("---")
+        m1, m2 = st.columns(2)
+        m1.metric("Is Mahine Ki Sale", f"Rs. {df_month['Sale'].sum():,.0f}")
+        m2.metric("Total Profit", f"Rs. {month_profit:,.0f}")
         
-        # Graphs
-        c1, c2 = st.columns(2)
-        with c1:
-            st.subheader("📈 Monthly Sales Trend")
-            fig = px.line(df_month.groupby('Date')['Sale'].sum().reset_index(), x='Date', y='Sale', markers=True)
-            st.plotly_chart(fig, use_container_width=True)
-        with c2:
-            st.subheader("💳 Payment Types (Monthly)")
-            fig_pay = px.pie(df_month, values='Sale', names='Payment', hole=0.4)
-            st.plotly_chart(fig_pay, use_container_width=True)
+        st.subheader("Records List")
+        st.dataframe(df_month.sort_values(by='Date', ascending=False), use_container_width=True)
     else:
-        st.info("No data available.")
+        st.info("Abhi tak koi entry nahi hui.")
 
-# --- 3. YEARLY ARCHIVE ---
-elif menu == "📂 Yearly Archive":
-    st.header("📂 Purana Record (Monthly Archive)")
-    if not df.empty:
-        df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
-        archive_df = df.groupby('Month_Year').agg({
-            'Sale': 'sum',
-            'Profit': 'sum',
-            'Item': 'count'
-        }).reset_index()
-        
-        st.write("Har mahine ka mukammal result yahan dekhin:")
-        st.table(archive_df.sort_values(by='Month_Year', ascending=False))
-        
-        selected_m = st.selectbox("Kis mahine ka detail dekhna hai?", df['Month_Year'].unique())
-        st.dataframe(df[df['Month_Year'] == selected_m].drop(columns=['Month_Year']), use_container_width=True)
+# --- 3. EMAIL BACKUP ---
+elif menu == "📧 Email Backup":
+    st.header("📧 Data Backup")
+    st.write("Apna sara record file ki surat mein apni Email par mangwaein.")
+    
+    target_mail = st.text_input("Apni Email Address likhein:")
+    if st.button("🚀 Send Record to My Email"):
+        if target_mail:
+            with st.spinner("Bheja ja raha hai..."):
+                if send_email_backup(target_mail):
+                    st.success(f"✅ Record successfully sent to {target_mail}!")
+                else:
+                    st.error("❌ Email nahi bheji ja saki. Secrets check karein.")
+        else:
+            st.warning("Pehle email address likhein.")
 
-# --- 4. HISTORY & DELETE ---
-elif menu == "⚙️ History & Delete":
-    st.header("Manage Records")
-    if not df.empty:
-        st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
-        delete_idx = st.number_input("Delete Index:", min_value=0, max_value=len(df)-1, step=1)
-        if st.button("❌ Permanent Delete"):
-            updated_df = df.drop(df.index[delete_idx])
-            save_data(updated_df, current_sha, "Record Deleted")
-            st.warning("Entry removed!")
-            st.rerun()
+    st.markdown("---")
+    # Manual Download Option
+    with open(CSV_FILE, "rb") as file:
+        st.download_button(
+            label="📥 Download CSV File (Manual)",
+            data=file,
+            file_name="ali_mobiles_record.csv",
+            mime="text/csv"
+        )
