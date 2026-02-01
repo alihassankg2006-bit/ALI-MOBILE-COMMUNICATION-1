@@ -24,38 +24,32 @@ try:
     g = Github(token)
     repo = g.get_repo(repo_name)
 except Exception:
-    st.error("Secrets Missing! Check GITHUB_TOKEN and REPO_NAME.")
+    st.error("Secrets Missing! Please check GITHUB_TOKEN and REPO_NAME in Settings.")
     st.stop()
 
-# --- Load Logo ---
+# --- Load Logo (Flexible Search) ---
 def get_logo():
     for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
         try:
-            return repo.get_contents(name).download_url
+            file_content = repo.get_contents(name)
+            return file_content.download_url
         except: continue
     return None
 
 logo_url = get_logo()
 
-# --- Data Logic (Robust Cleaning) ---
-CSV_FILE = "data.csv"
-EXPECTED_COLS = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
+# --- Data Logic ---
+CSV_FILE = "sales_record.csv"
 
 def load_data():
     try:
         contents = repo.get_contents(CSV_FILE)
         df = pd.read_csv(io.StringIO(contents.decoded_content.decode('utf-8')))
-        
-        # Faltu index column hatana (Unnamed column fix)
-        if df.columns[0].startswith('Unnamed') or df.columns[0] == "":
-            df = df.iloc[:, 1:]
-            
-        # Sirf zaruri columns rakhna
-        df = df[EXPECTED_COLS]
         df['Date'] = pd.to_datetime(df['Date'])
         return df, contents.sha
-    except Exception as e:
-        return pd.DataFrame(columns=EXPECTED_COLS), None
+    except:
+        cols = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
+        return pd.DataFrame(columns=cols), None
 
 def save_data(df, sha, message="Update"):
     csv_buffer = io.StringIO()
@@ -66,70 +60,96 @@ def save_data(df, sha, message="Update"):
 df, current_sha = load_data()
 now = datetime.now()
 
-# --- Header ---
+# --- Header Section ---
 col1, col2, col3 = st.columns([1, 2, 1])
 with col2:
     if logo_url: st.image(logo_url, use_container_width=True)
     else: st.markdown("<h1 style='text-align: center;'>Ali Mobiles & Communication</h1>", unsafe_allow_html=True)
-st.markdown(f"<p style='text-align: center;'><b>آج:</b> {now.strftime('%d %B, %Y')}</p>", unsafe_allow_html=True)
+
+st.markdown(f"<p style='text-align: center;'><b>آج کی تاریخ:</b> {now.strftime('%d %B, %Y')}</p>", unsafe_allow_html=True)
+st.markdown("---")
 
 # --- Navigation ---
-menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard", "📂 Archive", "⚙️ Delete"])
+menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard (Monthly)", "📂 Yearly Archive", "⚙️ Manage Records"])
 
+# --- 1. NEW ENTRY ---
 if menu == "📝 Nayi Entry":
-    st.header("📝 Nayi Entry")
+    st.header("📝 Nayi Entry Karein")
     with st.form("entry_form", clear_on_submit=True):
         c1, c2 = st.columns(2)
         with c1:
             date = st.date_input("Tareekh", now)
             cat = st.selectbox("Category", ["Accessories", "Repairing"])
-            item = st.text_input("Item Name")
+            item = st.text_input("Item Name / Kaam")
         with c2:
-            cost = st.number_input("Cost", 0.0)
-            sale = st.number_input("Sale", 0.0)
+            cost = st.number_input("Khareed (Cost)", min_value=0.0)
+            sale = st.number_input("Becha (Sale)", min_value=0.0)
             pay = st.selectbox("Payment", ["Cash", "EasyPaisa", "JazzCash"])
         
-        if st.form_submit_button("💾 Save"):
+        if st.form_submit_button("💾 Save to Cloud"):
             if item and sale > 0:
                 profit = sale - cost
-                new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=EXPECTED_COLS)
-                updated_df = pd.concat([df, new_row], ignore_index=True)
-                save_data(updated_df, current_sha, f"Added: {item}")
-                st.success("✅ Saved!")
+                new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=df.columns)
+                df = pd.concat([df, new_row], ignore_index=True)
+                df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+                save_data(df, current_sha, f"Added: {item}")
+                st.success("✅ Record saved successfully!")
                 st.rerun()
 
-elif menu == "📊 Dashboard":
-    st.header(f"📊 {now.strftime('%B %Y')}")
+# --- 2. DASHBOARD ---
+elif menu == "📊 Dashboard (Monthly)":
+    st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
-        df_m = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
-        t_prof = 60000
-        m_prof = df_m['Profit'].sum()
-        
-        st.markdown(f'<div class="target-card"><h3>🎯 Target: {now.strftime("%B")}</h3><h1>Rs. {m_prof:,.0f} / {t_prof:,}</h1></div>', unsafe_allow_html=True)
-        st.progress(min(m_prof/t_prof, 1.0) if t_prof > 0 else 0)
+        df['Date'] = pd.to_datetime(df['Date'])
+        # Today's data
+        df_today = df[df['Date'].dt.date == now.date()]
+        # Current month's data
+        df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
 
-        col1, col2 = st.columns(2)
-        col1.metric("Today's Profit", f"Rs. {df[df['Date'].dt.date == now.date()]['Profit'].sum():,.0f}")
-        col2.metric("Monthly Entries", len(df_m))
+        target = 60000
+        m_profit = df_month['Profit'].sum()
+        progress = min(m_profit / target, 1.0)
         
-        st.plotly_chart(px.bar(df_m.groupby('Date')['Sale'].sum().reset_index(), x='Date', y='Sale', color_discrete_sequence=['#00cc66']))
-    else: st.info("No records found.")
+        st.markdown(f"""
+            <div class="target-card">
+                <h3 style='margin:0;'>🎯 Monthly Profit Target ({now.strftime('%B')})</h3>
+                <h1 style='margin:10px 0;'>Rs. {m_profit:,.0f} / {target:,}</h1>
+                <p>Progress: {progress*100:.1f}% | Remaining: Rs. {max(target-m_profit, 0):,.0f}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        st.progress(progress)
 
-elif menu == "📂 Archive":
-    st.header("📂 Purana Record")
+        col_m1, col_m2, col_m3 = st.columns(3)
+        col_m1.metric("Today's Profit", f"Rs. {df_today['Profit'].sum():,.0f}")
+        col_m2.metric("Monthly Profit", f"Rs. {m_profit:,.0f}")
+        col_m3.metric("Monthly Entries", len(df_month))
+
+        st.markdown("---")
+        st.subheader("📈 Monthly Sales Chart")
+        if not df_month.empty:
+            chart_data = df_month.groupby('Date')['Sale'].sum().reset_index()
+            fig = px.bar(chart_data, x='Date', y='Sale', color_discrete_sequence=['#00cc66'])
+            st.plotly_chart(fig, use_container_width=True)
+    else: st.info("Is mahine ka koi record nahi mila.")
+
+# --- 3. YEARLY ARCHIVE ---
+elif menu == "📂 Yearly Archive":
+    st.header("📂 Purana Monthly Record")
     if not df.empty:
-        df['Month'] = df['Date'].dt.strftime('%B %Y')
-        summary = df.groupby('Month').agg({'Sale':'sum', 'Profit':'sum'}).reset_index().sort_values(by='Month', ascending=False)
-        st.table(summary)
-        sel_m = st.selectbox("Mahina select karein:", summary['Month'].unique())
-        st.dataframe(df[df['Month'] == sel_m].drop(columns=['Month']), use_container_width=True)
+        df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
+        archive = df.groupby('Month_Year').agg({'Sale':'sum', 'Profit':'sum', 'Item':'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
+        st.table(archive)
+        selected = st.selectbox("Details dekhne ke liye mahina select karein:", archive['Month_Year'].unique())
+        st.dataframe(df[df['Month_Year'] == selected].drop(columns=['Month_Year']), use_container_width=True)
 
-elif menu == "⚙️ Delete":
-    st.header("⚙️ Delete Records")
+# --- 4. MANAGE RECORDS ---
+elif menu == "⚙️ Manage Records":
+    st.header("⚙️ Edit/Delete Records")
     st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
-    idx = st.number_input("Index:", 0, len(df)-1 if len(df)>0 else 0, 1)
-    if st.button("❌ Delete"):
+    idx = st.number_input("Index no. for Delete:", min_value=0, max_value=len(df)-1 if len(df)>0 else 0, step=1)
+    if st.button("❌ Delete Permanently"):
         df = df.drop(df.index[idx])
+        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
         save_data(df, current_sha, "Deleted")
-        st.warning("Deleted!")
+        st.warning("Entry deleted!")
         st.rerun()
