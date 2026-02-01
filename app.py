@@ -27,7 +27,7 @@ except Exception as e:
     st.error(f"Secrets Missing! Settings check karein. Error: {e}")
     st.stop()
 
-# --- 3. Robust Functions ---
+# --- 3. Functions ---
 
 def get_logo():
     for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
@@ -44,14 +44,14 @@ def load_data():
         contents = repo.get_contents(CSV_FILE)
         raw_df = pd.read_csv(io.StringIO(contents.decoded_content.decode('utf-8')))
         
-        # Column cleaning for your data.csv
-        if len(raw_df.columns) > 7:
+        # Cleaning: Agar pehla column index hai toh usay hata do
+        if raw_df.shape[1] > 7:
             raw_df = raw_df.iloc[:, -7:]
         
         raw_df.columns = COLS
-        # Force correct date conversion
+        # Convert string to proper Datetime objects
         raw_df['Date'] = pd.to_datetime(raw_df['Date'], errors='coerce')
-        # Remove any rows where date conversion failed
+        # Remove empty dates if any
         raw_df = raw_df.dropna(subset=['Date'])
         return raw_df
     except Exception:
@@ -59,6 +59,7 @@ def load_data():
 
 def save_data(df, message="Update"):
     csv_buffer = io.StringIO()
+    # Save to CSV without the index column
     df.to_csv(csv_buffer, index=False)
     try:
         contents = repo.get_contents(CSV_FILE)
@@ -88,11 +89,11 @@ menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard", "📂
 
 # --- SECTION 1: ENTRY ---
 if menu == "📝 Nayi Entry":
-    st.header("📝 Nayi Entry")
+    st.header("📝 Nayi Entry Karein")
     with st.form("entry_form", clear_on_submit=True):
         c1, c2 = st.columns(2)
         with c1:
-            date = st.date_input("Tareekh", now)
+            date_input = st.date_input("Tareekh", now)
             cat = st.selectbox("Category", ["Accessories", "Repairing"])
             item = st.text_input("Item Name / Kaam")
         with c2:
@@ -100,21 +101,28 @@ if menu == "📝 Nayi Entry":
             sale = st.number_input("Sale (Becha)", 0.0)
             pay = st.selectbox("Payment", ["Cash", "EasyPaisa", "JazzCash"])
         
-        if st.form_submit_button("💾 Save"):
+        if st.form_submit_button("💾 Save Entry"):
             if item and sale >= 0:
                 profit = sale - cost
-                new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=COLS)
+                # Create new row
+                new_row = pd.DataFrame([[pd.to_datetime(date_input), cat, item, cost, sale, profit, pay]], columns=COLS)
+                # Combine and ensure date is datetime type
                 df = pd.concat([df, new_row], ignore_index=True)
-                df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-                if save_data(df, f"Added: {item}"):
-                    st.success("✅ Saved!")
+                df['Date'] = pd.to_datetime(df['Date'])
+                
+                # Format to string ONLY for saving to CSV
+                save_df = df.copy()
+                save_df['Date'] = save_df['Date'].dt.strftime('%Y-%m-%d')
+                
+                if save_data(save_df, f"Added: {item}"):
+                    st.success("✅ Entry saved successfully!")
                     st.rerun()
 
-# --- SECTION 2: DASHBOARD (Current Month) ---
+# --- SECTION 2: DASHBOARD ---
 elif menu == "📊 Dashboard":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
-        # Filtering for Current Month
+        # Filtering using proper datetime objects
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
         df_today = df[df['Date'].dt.date == now.date()]
 
@@ -123,7 +131,7 @@ elif menu == "📊 Dashboard":
         
         st.markdown(f"""
             <div class="target-card">
-                <h3>🎯 Target: {now.strftime('%B')}</h3>
+                <h3>🎯 Monthly Target: {now.strftime('%B')}</h3>
                 <h1>Rs. {m_profit:,.0f} / {target:,}</h1>
             </div>
             """, unsafe_allow_html=True)
@@ -133,26 +141,21 @@ elif menu == "📊 Dashboard":
         col1.metric("Today's Profit", f"Rs. {df_today['Profit'].sum():,.0f}")
         col2.metric("Monthly Entries", len(df_month))
         
-        st.plotly_chart(px.bar(df_month.groupby('Date')['Sale'].sum().reset_index(), x='Date', y='Sale', color_discrete_sequence=['#00cc66']))
+        if not df_month.empty:
+            chart_data = df_month.groupby(df_month['Date'].dt.date)['Sale'].sum().reset_index()
+            st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', color_discrete_sequence=['#00cc66']))
     else: st.info("No records for this month.")
 
-# --- SECTION 3: ARCHIVE (Full History) ---
+# --- SECTION 3: ARCHIVE ---
 elif menu == "📂 Archive":
     st.header("📂 Purana Monthly Record")
     if not df.empty:
-        # Extract Month Year for grouping
+        # Create Month-Year column for display
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
-        # All-time summary
-        summary = df.groupby('Month_Year').agg({
-            'Sale': 'sum',
-            'Profit': 'sum',
-            'Item': 'count'
-        }).reset_index().sort_values(by='Month_Year', ascending=False)
+        summary = df.groupby('Month_Year').agg({'Sale': 'sum', 'Profit': 'sum', 'Item': 'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
         
         st.table(summary)
-        
-        # Detail View
-        sel_m = st.selectbox("Details dekhne ke liye mahina select karein:", summary['Month_Year'].unique())
+        sel_m = st.selectbox("Select Month for Detail:", summary['Month_Year'].unique())
         detail_df = df[df['Month_Year'] == sel_m].sort_values(by='Date', ascending=False)
         st.dataframe(detail_df[COLS], use_container_width=True)
     else: st.info("Archive is empty.")
@@ -160,11 +163,13 @@ elif menu == "📂 Archive":
 # --- SECTION 4: MANAGE ---
 elif menu == "⚙️ Manage Records":
     st.header("⚙️ Data Management")
-    st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
-    idx = st.number_input("Index to Delete:", 0, len(df)-1 if len(df)>0 else 0, 1)
-    if st.button("❌ Delete Permanently"):
-        df = df.drop(df.index[idx])
-        df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-        if save_data(df, "Deleted"):
-            st.warning("Removed!")
-            st.rerun()
+    if not df.empty:
+        st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
+        idx = st.number_input("Index to Delete:", 0, len(df)-1, 1)
+        if st.button("❌ Delete Permanently"):
+            df = df.drop(df.index[idx])
+            save_df = df.copy()
+            save_df['Date'] = save_df['Date'].dt.strftime('%Y-%m-%d')
+            if save_data(save_df, "Deleted"):
+                st.warning("Record Removed!")
+                st.rerun()
