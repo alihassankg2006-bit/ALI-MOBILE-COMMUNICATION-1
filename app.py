@@ -12,8 +12,16 @@ st.set_page_config(page_title="Ali Mobiles & Communication", page_icon="📱", l
 st.markdown("""
     <style>
     .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #4e5d6c; }
-    .target-card { background-color: #1e2130; padding: 20px; border-radius: 15px; text-align: center; border: 2px solid #00cc66; margin-bottom: 20px; }
+    .target-card { 
+        background-color: #1e2130; 
+        padding: 25px; 
+        border-radius: 15px; 
+        text-align: center; 
+        border: 2px solid #00cc66; 
+        margin-bottom: 20px; 
+    }
     h1, h2, h3 { color: #00cc66 !important; }
+    .status-text { font-size: 24px; font-weight: bold; margin-top: 10px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -43,15 +51,10 @@ def load_data():
     try:
         contents = repo.get_contents(CSV_FILE)
         raw_df = pd.read_csv(io.StringIO(contents.decoded_content.decode('utf-8')))
-        
-        # Cleaning: Agar pehla column index hai toh usay hata do
         if raw_df.shape[1] > 7:
             raw_df = raw_df.iloc[:, -7:]
-        
         raw_df.columns = COLS
-        # Convert string to proper Datetime objects
         raw_df['Date'] = pd.to_datetime(raw_df['Date'], errors='coerce')
-        # Remove empty dates if any
         raw_df = raw_df.dropna(subset=['Date'])
         return raw_df
     except Exception:
@@ -59,7 +62,6 @@ def load_data():
 
 def save_data(df, message="Update"):
     csv_buffer = io.StringIO()
-    # Save to CSV without the index column
     df.to_csv(csv_buffer, index=False)
     try:
         contents = repo.get_contents(CSV_FILE)
@@ -104,16 +106,11 @@ if menu == "📝 Nayi Entry":
         if st.form_submit_button("💾 Save Entry"):
             if item and sale >= 0:
                 profit = sale - cost
-                # Create new row
                 new_row = pd.DataFrame([[pd.to_datetime(date_input), cat, item, cost, sale, profit, pay]], columns=COLS)
-                # Combine and ensure date is datetime type
                 df = pd.concat([df, new_row], ignore_index=True)
                 df['Date'] = pd.to_datetime(df['Date'])
-                
-                # Format to string ONLY for saving to CSV
                 save_df = df.copy()
                 save_df['Date'] = save_df['Date'].dt.strftime('%Y-%m-%d')
-                
                 if save_data(save_df, f"Added: {item}"):
                     st.success("✅ Entry saved successfully!")
                     st.rerun()
@@ -122,19 +119,31 @@ if menu == "📝 Nayi Entry":
 elif menu == "📊 Dashboard":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
-        # Filtering using proper datetime objects
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
         df_today = df[df['Date'].dt.date == now.date()]
 
+        # Target Calculations
         target = 60000
         m_profit = df_month['Profit'].sum()
+        completion_pct = (m_profit / target) * 100 if target > 0 else 0
+        remaining = target - m_profit if target > m_profit else 0
         
+        # Color Logic based on progress
+        if completion_pct < 50: status_color = "#ff4b4b"  # Red
+        elif completion_pct < 100: status_color = "#ffcc00"  # Yellow/Orange
+        else: status_color = "#00cc66"  # Green
+
         st.markdown(f"""
-            <div class="target-card">
-                <h3>🎯 Monthly Target: {now.strftime('%B')}</h3>
-                <h1>Rs. {m_profit:,.0f} / {target:,}</h1>
+            <div class="target-card" style="border-color: {status_color};">
+                <h3 style="color: #ffffff !important; margin-bottom: 5px;">🎯 Monthly Target: {now.strftime('%B')}</h3>
+                <h1 style="color: #ffffff !important; margin: 0;">Rs. {m_profit:,.0f} / {target:,}</h1>
+                <div class="status-text" style="color: {status_color};">
+                    {completion_pct:.1f}% مکمل ہو چکا ہے
+                </div>
+                {f"<p style='color: #aeb2b7;'>باقی رقم: Rs. {remaining:,.0f}</p>" if remaining > 0 else "<p style='color: #00cc66; font-weight: bold;'>مبروک! ہدف مکمل ہو گیا 🎉</p>"}
             </div>
             """, unsafe_allow_html=True)
+        
         st.progress(min(m_profit/target, 1.0) if target > 0 else 0)
 
         col1, col2 = st.columns(2)
@@ -143,17 +152,15 @@ elif menu == "📊 Dashboard":
         
         if not df_month.empty:
             chart_data = df_month.groupby(df_month['Date'].dt.date)['Sale'].sum().reset_index()
-            st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', color_discrete_sequence=['#00cc66']))
+            st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', title="Daily Sales Trend", color_discrete_sequence=['#00cc66']))
     else: st.info("No records for this month.")
 
 # --- SECTION 3: ARCHIVE ---
 elif menu == "📂 Archive":
     st.header("📂 Purana Monthly Record")
     if not df.empty:
-        # Create Month-Year column for display
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
         summary = df.groupby('Month_Year').agg({'Sale': 'sum', 'Profit': 'sum', 'Item': 'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
-        
         st.table(summary)
         sel_m = st.selectbox("Select Month for Detail:", summary['Month_Year'].unique())
         detail_df = df[df['Month_Year'] == sel_m].sort_values(by='Date', ascending=False)
@@ -165,7 +172,7 @@ elif menu == "⚙️ Manage Records":
     st.header("⚙️ Data Management")
     if not df.empty:
         st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
-        idx = st.number_input("Index to Delete:", 0, len(df)-1, 1)
+        idx = st.number_input("Index to Delete:", 0, len(df)-1, 0)
         if st.button("❌ Delete Permanently"):
             df = df.drop(df.index[idx])
             save_df = df.copy()
