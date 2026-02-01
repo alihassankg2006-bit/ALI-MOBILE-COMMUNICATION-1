@@ -38,6 +38,14 @@ except Exception as e:
 
 # --- 3. Functions ---
 
+def get_logo():
+    # Logo search karne ka function
+    for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
+        try:
+            return repo.get_contents(name).download_url
+        except: continue
+    return None
+
 CSV_FILE = "data.csv"
 COLS = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
 
@@ -56,7 +64,6 @@ def load_data():
 
 def save_data(df, message="Update"):
     csv_buffer = io.StringIO()
-    # Save date in YYYY-MM-DD format for consistency
     save_df = df.copy()
     save_df['Date'] = pd.to_datetime(save_df['Date']).dt.strftime('%Y-%m-%d')
     save_df.to_csv(csv_buffer, index=False)
@@ -72,10 +79,17 @@ def save_data(df, message="Update"):
 
 # --- 4. Logic ---
 df = load_data()
+logo_url = get_logo()
 now = datetime.now()
 
-# Header
-st.markdown("<h1 style='text-align: center;'>Ali Mobiles & Communication</h1>", unsafe_allow_html=True)
+# Header Logic (Logo Restore)
+col_h1, col_h2, col_h3 = st.columns([1, 2, 1])
+with col_h2:
+    if logo_url: 
+        st.image(logo_url, use_container_width=True)
+    else: 
+        st.markdown("<h1 style='text-align: center;'>Ali Mobiles & Communication</h1>", unsafe_allow_html=True)
+
 st.markdown(f"<p style='text-align: center;'><b>آج کی تاریخ:</b> {now.strftime('%d %B, %Y')}</p>", unsafe_allow_html=True)
 st.markdown("---")
 
@@ -111,7 +125,6 @@ elif menu == "📊 Dashboard":
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
         df_today = df[df['Date'].dt.date == now.date()]
 
-        # Target & Stats
         target = 60000
         m_profit = df_month['Profit'].sum()
         m_sale = df_month['Sale'].sum()
@@ -131,11 +144,9 @@ elif menu == "📊 Dashboard":
         col2.metric("Today's Profit", f"Rs. {df_today['Profit'].sum():,.0f}")
         col3.metric("Today's Entries", len(df_today))
 
-        st.markdown("### 📋 Aaj Ka Record (Today's Entries)")
+        st.markdown("### 📋 Aaj Ka Record (Detailed)")
         if not df_today.empty:
-            # Show today's entries clearly
-            display_today = df_today[['Item', 'Category', 'Sale', 'Profit', 'Payment']].copy()
-            st.table(display_today)
+            st.table(df_today[['Item', 'Category', 'Sale', 'Profit', 'Payment']])
         else:
             st.info("آج ابھی تک کوئی اینٹری نہیں کی گئی۔")
             
@@ -156,26 +167,22 @@ elif menu == "📂 Archive":
         detail_df = df[df['Month_Year'] == sel_m].sort_values(by='Date', ascending=False)
         st.dataframe(detail_df[COLS], use_container_width=True)
 
-# --- SECTION 4: MANAGE (EDIT/DELETE) ---
+# --- SECTION 4: MANAGE ---
 elif menu == "⚙️ Manage Records":
     st.header("⚙️ Records Edit ya Delete Karein")
     if not df.empty:
-        # Show last 20 records first
         st.subheader("Recent Entries")
         temp_df = df.sort_index(ascending=False).head(20)
         st.dataframe(temp_df[COLS], use_container_width=True)
         
         st.markdown("---")
-        # Select Index for Action
         action_idx = st.number_input("Enter Index to Edit/Delete:", 0, len(df)-1, value=len(df)-1)
         
         col_btn1, col_btn2 = st.columns(2)
-        
         with col_btn1:
             if st.button("🖊️ Edit This Entry"):
                 st.session_state.edit_mode = True
                 st.session_state.edit_idx = action_idx
-        
         with col_btn2:
             if st.button("❌ Delete Permanently"):
                 item_name = df.iloc[action_idx]['Item']
@@ -184,8 +191,7 @@ elif menu == "⚙️ Manage Records":
                     st.warning(f"Record '{item_name}' removed!")
                     st.rerun()
 
-        # Edit Form
-        if st.get("edit_mode", False):
+        if st.session_state.get("edit_mode", False):
             st.markdown("### 📝 Edit Entry Details")
             row = df.iloc[st.session_state.edit_idx]
             with st.form("edit_form"):
@@ -210,3 +216,4 @@ elif menu == "⚙️ Manage Records":
                         st.success("Record Updated!")
                         st.rerun()
     else: st.info("No data to manage.")
+        
