@@ -8,7 +8,7 @@ from datetime import datetime
 # --- Page Configuration ---
 st.set_page_config(page_title="Ali Mobiles & Communication", page_icon="📱", layout="wide")
 
-# Custom Styling
+# Custom Styling (Original Professional Look)
 st.markdown("""
     <style>
     .stMetric { background-color: #1e2130; padding: 15px; border-radius: 10px; border: 1px solid #4e5d6c; }
@@ -23,39 +23,45 @@ try:
     repo_name = st.secrets["REPO_NAME"]
     g = Github(token)
     repo = g.get_repo(repo_name)
-except Exception:
-    st.error("Secrets Missing! Please check GITHUB_TOKEN and REPO_NAME in Settings.")
+except Exception as e:
+    st.error(f"Secrets Missing! Check Streamlit Settings. Error: {e}")
     st.stop()
 
-# --- Load Logo (Flexible Search) ---
+# --- Flexible Logo Search ---
 def get_logo():
     for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
         try:
-            file_content = repo.get_contents(name)
-            return file_content.download_url
+            return repo.get_contents(name).download_url
         except: continue
     return None
 
 logo_url = get_logo()
 
-# --- Data Logic ---
-CSV_FILE = "sales_record.csv"
+# --- Data Logic (Specific to your data.csv) ---
+CSV_FILE = "data.csv"
+COLS = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
 
 def load_data():
     try:
         contents = repo.get_contents(CSV_FILE)
-        df = pd.read_csv(io.StringIO(contents.decoded_content.decode('utf-8')))
-        df['Date'] = pd.to_datetime(df['Date'])
-        return df, contents.sha
-    except:
-        cols = ['Date', 'Category', 'Item', 'Cost', 'Sale', 'Profit', 'Payment']
-        return pd.DataFrame(columns=cols), None
+        raw_df = pd.read_csv(io.StringIO(contents.decoded_content.decode('utf-8')))
+        
+        # Faltu index columns ko hatana (Cleaning your data.csv structure)
+        if raw_df.columns[0].startswith('Unnamed') or raw_df.columns[0] == "":
+            raw_df = raw_df.iloc[:, 1:]
+        
+        # Column names ko set karna
+        raw_df.columns = COLS
+        raw_df['Date'] = pd.to_datetime(raw_df['Date'])
+        return raw_df, contents.sha
+    except Exception as e:
+        return pd.DataFrame(columns=COLS), None
 
-def save_data(df, sha, message="Update"):
-    csv_buffer = io.StringIO()
-    df.to_csv(csv_buffer, index=False)
-    if sha: repo.update_file(CSV_FILE, message, csv_buffer.getvalue(), sha)
-    else: repo.create_file(CSV_FILE, "Initial Record", csv_buffer.getvalue())
+def save_data(df, sha, msg="Update"):
+    csv_buf = io.StringIO()
+    df.to_csv(csv_buf, index=False)
+    if sha: repo.update_file(CSV_FILE, msg, csv_buf.getvalue(), sha)
+    else: repo.create_file(CSV_FILE, "Initial", csv_buf.getvalue())
 
 df, current_sha = load_data()
 now = datetime.now()
@@ -70,7 +76,7 @@ st.markdown(f"<p style='text-align: center;'><b>آج کی تاریخ:</b> {now.s
 st.markdown("---")
 
 # --- Navigation ---
-menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard (Monthly)", "📂 Yearly Archive", "⚙️ Manage Records"])
+menu = st.sidebar.radio("Main Menu", ["📝 Nayi Entry", "📊 Dashboard", "📂 Archive", "⚙️ Manage Records"])
 
 # --- 1. NEW ENTRY ---
 if menu == "📝 Nayi Entry":
@@ -89,15 +95,15 @@ if menu == "📝 Nayi Entry":
         if st.form_submit_button("💾 Save to Cloud"):
             if item and sale > 0:
                 profit = sale - cost
-                new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=df.columns)
+                new_row = pd.DataFrame([[date.strftime('%Y-%m-%d'), cat, item, cost, sale, profit, pay]], columns=COLS)
                 df = pd.concat([df, new_row], ignore_index=True)
-                df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
+                # Save without index to keep data.csv clean
                 save_data(df, current_sha, f"Added: {item}")
-                st.success("✅ Record saved successfully!")
+                st.success("✅ Record saved successfully to data.csv!")
                 st.rerun()
 
 # --- 2. DASHBOARD ---
-elif menu == "📊 Dashboard (Monthly)":
+elif menu == "📊 Dashboard":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
         df['Date'] = pd.to_datetime(df['Date'])
@@ -108,7 +114,7 @@ elif menu == "📊 Dashboard (Monthly)":
 
         target = 60000
         m_profit = df_month['Profit'].sum()
-        progress = min(m_profit / target, 1.0)
+        progress = min(m_profit / target, 1.0) if target > 0 else 0
         
         st.markdown(f"""
             <div class="target-card">
@@ -130,10 +136,10 @@ elif menu == "📊 Dashboard (Monthly)":
             chart_data = df_month.groupby('Date')['Sale'].sum().reset_index()
             fig = px.bar(chart_data, x='Date', y='Sale', color_discrete_sequence=['#00cc66'])
             st.plotly_chart(fig, use_container_width=True)
-    else: st.info("Is mahine ka koi record nahi mila.")
+    else: st.info("Abhi is mahine ka koi record nahi mila.")
 
-# --- 3. YEARLY ARCHIVE ---
-elif menu == "📂 Yearly Archive":
+# --- 3. ARCHIVE ---
+elif menu == "📂 Archive":
     st.header("📂 Purana Monthly Record")
     if not df.empty:
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
@@ -144,12 +150,11 @@ elif menu == "📂 Yearly Archive":
 
 # --- 4. MANAGE RECORDS ---
 elif menu == "⚙️ Manage Records":
-    st.header("⚙️ Edit/Delete Records")
+    st.header("⚙️ Data Management")
     st.dataframe(df.sort_values(by='Date', ascending=False), use_container_width=True)
-    idx = st.number_input("Index no. for Delete:", min_value=0, max_value=len(df)-1 if len(df)>0 else 0, step=1)
+    idx = st.number_input("Delete Index:", min_value=0, max_value=len(df)-1 if len(df)>0 else 0, step=1)
     if st.button("❌ Delete Permanently"):
         df = df.drop(df.index[idx])
-        df['Date'] = pd.to_datetime(df['Date']).dt.strftime('%Y-%m-%d')
         save_data(df, current_sha, "Deleted")
         st.warning("Entry deleted!")
         st.rerun()
