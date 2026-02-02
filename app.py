@@ -111,7 +111,6 @@ if menu == "📝 Nayi Entry":
         c1, c2 = st.columns(2)
         with c1:
             date_input = st.date_input("Tareekh", now.date())
-            # Ghar ka Kharcha category added
             cat = st.selectbox("Category", ["Accessories", "Repairing", "Ghar ka Kharcha"])
             item = st.text_input("Item Name / Kaam / Detail")
         with c2:
@@ -121,7 +120,6 @@ if menu == "📝 Nayi Entry":
         
         if st.form_submit_button("💾 Save Entry"):
             if item:
-                # Agar Ghar ka Kharcha hai to Profit ko negative cost consider karein ya zero
                 profit = (sale - cost) if cat != "Ghar ka Kharcha" else 0
                 new_row = pd.DataFrame([[pd.to_datetime(date_input), cat, item, cost, sale, profit, pay]], columns=COLS)
                 df = pd.concat([df, new_row], ignore_index=True)
@@ -136,7 +134,6 @@ elif menu == "📊 Dashboard":
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
         df_today = df[df['Date'].dt.date == now.date()]
 
-        # Business vs Home Calculations
         m_shop_profit = df_month[df_month['Category'] != "Ghar ka Kharcha"]['Profit'].sum()
         m_home_expense = df_month[df_month['Category'] == "Ghar ka Kharcha"]['Cost'].sum()
         net_savings = m_shop_profit - m_home_expense
@@ -144,7 +141,6 @@ elif menu == "📊 Dashboard":
         target = 60000
         completion_pct = (m_shop_profit / target) * 100 if target > 0 else 0
         
-        # Display Cards
         row_cards = st.columns(2)
         with row_cards[0]:
             st.markdown(f"""
@@ -166,7 +162,6 @@ elif menu == "📊 Dashboard":
 
         st.progress(min(max(m_shop_profit,0)/target, 1.0) if target > 0 else 0)
 
-        # Detailed Metrics
         st.markdown("---")
         col1, col2, col3 = st.columns(3)
         col1.metric("Shop Total Sale", f"Rs. {df_month[df_month['Category'] != 'Ghar ka Kharcha']['Sale'].sum():,.0f}")
@@ -179,28 +174,31 @@ elif menu == "📊 Dashboard":
         else:
             st.info("آج ابھی تک کوئی اینٹری نہیں کی گئی۔")
             
-        if not df_month.empty:
-            st.markdown("---")
-            # Graph excluding Home Expenses for sales tracking
-            chart_df = df_month[df_month['Category'] != "Ghar ka Kharcha"]
-            if not chart_df.empty:
-                chart_data = chart_df.groupby(chart_df['Date'].dt.date)['Sale'].sum().reset_index()
-                st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', title="Daily Shop Sales Graph", color_discrete_sequence=['#00cc66']), use_container_width=True)
     else: st.info("ریکارڈ خالی ہے۔")
 
-# --- SECTION 3: ARCHIVE ---
+# --- SECTION 3: ARCHIVE (FIXED) ---
 elif menu == "📂 Archive":
     st.header("📂 Purana Monthly Record")
     if not df.empty:
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
-        # Updated summary to include Home Expenses
+        
+        # Archive summary me Sale wapis add kar di gayi hai
         summary = df.groupby('Month_Year').apply(lambda x: pd.Series({
+            'Total Sale': x[x['Category'] != 'Ghar ka Kharcha']['Sale'].sum(),
             'Shop Profit': x[x['Category'] != 'Ghar ka Kharcha']['Profit'].sum(),
             'Home Expense': x[x['Category'] == 'Ghar ka Kharcha']['Cost'].sum(),
             'Net Savings': x[x['Category'] != 'Ghar ka Kharcha']['Profit'].sum() - x[x['Category'] == 'Ghar ka Kharcha']['Cost'].sum()
         })).reset_index().sort_values(by='Month_Year', ascending=False)
-        st.table(summary)
         
+        # Table display formatting
+        st.table(summary.style.format({
+            'Total Sale': 'Rs. {:,.0f}',
+            'Shop Profit': 'Rs. {:,.0f}',
+            'Home Expense': 'Rs. {:,.0f}',
+            'Net Savings': 'Rs. {:,.0f}'
+        }))
+        
+        st.markdown("---")
         sel_m = st.selectbox("Select Month for Detail:", summary['Month_Year'].unique())
         detail_df = df[df['Month_Year'] == sel_m].sort_values(by='Date', ascending=False)
         st.dataframe(detail_df[COLS], use_container_width=True)
