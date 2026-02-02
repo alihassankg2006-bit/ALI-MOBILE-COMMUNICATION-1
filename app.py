@@ -4,6 +4,7 @@ import plotly.express as px
 from github import Github
 import io
 from datetime import datetime
+import pytz  # Timezone fix karne ke liye
 
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="Ali Mobiles & Communication", page_icon="📱", layout="wide")
@@ -39,7 +40,6 @@ except Exception as e:
 # --- 3. Functions ---
 
 def get_logo():
-    # Logo search karne ka function
     for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
         try:
             return repo.get_contents(name).download_url
@@ -77,12 +77,15 @@ def save_data(df, message="Update"):
             return True
         except: return False
 
-# --- 4. Logic ---
+# --- 4. Logic (Updated Time Management) ---
+# Pakistan Time set karne ki logic
+pk_tz = pytz.timezone('Asia/Karachi')
+now = datetime.now(pk_tz)
+
 df = load_data()
 logo_url = get_logo()
-now = datetime.now()
 
-# Header Logic (Logo Restore)
+# Header Logic
 col_h1, col_h2, col_h3 = st.columns([1, 2, 1])
 with col_h2:
     if logo_url: 
@@ -101,7 +104,7 @@ if menu == "📝 Nayi Entry":
     with st.form("entry_form", clear_on_submit=True):
         c1, c2 = st.columns(2)
         with c1:
-            date_input = st.date_input("Tareekh", now)
+            date_input = st.date_input("Tareekh", now.date())
             cat = st.selectbox("Category", ["Accessories", "Repairing"])
             item = st.text_input("Item Name / Kaam")
         with c2:
@@ -122,7 +125,9 @@ if menu == "📝 Nayi Entry":
 elif menu == "📊 Dashboard":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
+        # Month filter based on PKT now
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
+        # Today filter based on PKT now date
         df_today = df[df['Date'].dt.date == now.date()]
 
         target = 60000
