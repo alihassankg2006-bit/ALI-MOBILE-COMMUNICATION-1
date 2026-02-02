@@ -4,7 +4,7 @@ import plotly.express as px
 from github import Github
 import io
 from datetime import datetime
-import pytz  # Timezone fix karne ke liye
+import pytz
 
 # --- 1. Page Configuration ---
 st.set_page_config(page_title="Ali Mobiles & Communication", page_icon="📱", layout="wide")
@@ -19,6 +19,14 @@ st.markdown("""
         border-radius: 15px; 
         text-align: center; 
         border: 2px solid #00cc66; 
+        margin-bottom: 20px; 
+    }
+    .expense-card { 
+        background-color: #1e2130; 
+        padding: 25px; 
+        border-radius: 15px; 
+        text-align: center; 
+        border: 2px solid #ff4b4b; 
         margin-bottom: 20px; 
     }
     h1, h2, h3 { color: #00cc66 !important; }
@@ -38,7 +46,6 @@ except Exception as e:
     st.stop()
 
 # --- 3. Functions ---
-
 def get_logo():
     for name in ["logo.png", "Logo.png", "logo.jpg", "Logo.jpg"]:
         try:
@@ -77,15 +84,14 @@ def save_data(df, message="Update"):
             return True
         except: return False
 
-# --- 4. Logic (Updated Time Management) ---
-# Pakistan Time set karne ki logic
+# --- 4. Logic ---
 pk_tz = pytz.timezone('Asia/Karachi')
 now = datetime.now(pk_tz)
 
 df = load_data()
 logo_url = get_logo()
 
-# Header Logic
+# Header
 col_h1, col_h2, col_h3 = st.columns([1, 2, 1])
 with col_h2:
     if logo_url: 
@@ -105,19 +111,21 @@ if menu == "📝 Nayi Entry":
         c1, c2 = st.columns(2)
         with c1:
             date_input = st.date_input("Tareekh", now.date())
-            cat = st.selectbox("Category", ["Accessories", "Repairing"])
-            item = st.text_input("Item Name / Kaam")
+            # Ghar ka Kharcha category added
+            cat = st.selectbox("Category", ["Accessories", "Repairing", "Ghar ka Kharcha"])
+            item = st.text_input("Item Name / Kaam / Detail")
         with c2:
-            cost = st.number_input("Cost (Khareed)", 0.0)
+            cost = st.number_input("Cost (Khareed / Kharcha)", 0.0)
             sale = st.number_input("Sale (Becha)", 0.0)
             pay = st.selectbox("Payment", ["Cash", "EasyPaisa", "JazzCash"])
         
         if st.form_submit_button("💾 Save Entry"):
-            if item and sale >= 0:
-                profit = sale - cost
+            if item:
+                # Agar Ghar ka Kharcha hai to Profit ko negative cost consider karein ya zero
+                profit = (sale - cost) if cat != "Ghar ka Kharcha" else 0
                 new_row = pd.DataFrame([[pd.to_datetime(date_input), cat, item, cost, sale, profit, pay]], columns=COLS)
                 df = pd.concat([df, new_row], ignore_index=True)
-                if save_data(df, f"Added: {item}"):
+                if save_data(df, f"Added: {item} ({cat})"):
                     st.success(f"✅ {item} محفوظ کر لیا گیا!")
                     st.rerun()
 
@@ -125,40 +133,59 @@ if menu == "📝 Nayi Entry":
 elif menu == "📊 Dashboard":
     st.header(f"📊 {now.strftime('%B %Y')} Reports")
     if not df.empty:
-        # Month filter based on PKT now
         df_month = df[(df['Date'].dt.month == now.month) & (df['Date'].dt.year == now.year)]
-        # Today filter based on PKT now date
         df_today = df[df['Date'].dt.date == now.date()]
 
-        target = 60000
-        m_profit = df_month['Profit'].sum()
-        m_sale = df_month['Sale'].sum()
-        completion_pct = (m_profit / target) * 100 if target > 0 else 0
-        
-        st.markdown(f"""
-            <div class="target-card">
-                <h3 style="color:white !important;">🎯 Monthly Profit Target</h3>
-                <h1 style="color:white !important;">Rs. {m_profit:,.0f} / {target:,}</h1>
-                <div class="status-text">{completion_pct:.1f}% مکمل</div>
-            </div>
-            """, unsafe_allow_html=True)
-        st.progress(min(m_profit/target, 1.0) if target > 0 else 0)
+        # Business vs Home Calculations
+        m_shop_profit = df_month[df_month['Category'] != "Ghar ka Kharcha"]['Profit'].sum()
+        m_home_expense = df_month[df_month['Category'] == "Ghar ka Kharcha"]['Cost'].sum()
+        net_savings = m_shop_profit - m_home_expense
 
+        target = 60000
+        completion_pct = (m_shop_profit / target) * 100 if target > 0 else 0
+        
+        # Display Cards
+        row_cards = st.columns(2)
+        with row_cards[0]:
+            st.markdown(f"""
+                <div class="target-card">
+                    <h3 style="color:white !important;">🎯 Monthly Shop Profit</h3>
+                    <h1 style="color:white !important;">Rs. {m_shop_profit:,.0f}</h1>
+                    <div class="status-text">{completion_pct:.1f}% of Target</div>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        with row_cards[1]:
+            st.markdown(f"""
+                <div class="expense-card">
+                    <h3 style="color:white !important;">🏠 Ghar ka Kharcha</h3>
+                    <h1 style="color:white !important;">Rs. {m_home_expense:,.0f}</h1>
+                    <div class="status-text" style="color:#ff4b4b !important;">Net Savings: Rs. {net_savings:,.0f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.progress(min(max(m_shop_profit,0)/target, 1.0) if target > 0 else 0)
+
+        # Detailed Metrics
+        st.markdown("---")
         col1, col2, col3 = st.columns(3)
-        col1.metric("Month Total Sale", f"Rs. {m_sale:,.0f}")
-        col2.metric("Today's Profit", f"Rs. {df_today['Profit'].sum():,.0f}")
-        col3.metric("Today's Entries", len(df_today))
+        col1.metric("Shop Total Sale", f"Rs. {df_month[df_month['Category'] != 'Ghar ka Kharcha']['Sale'].sum():,.0f}")
+        col2.metric("Today's Profit", f"Rs. {df_today[df_today['Category'] != 'Ghar ka Kharcha']['Profit'].sum():,.0f}")
+        col3.metric("Today's Home Expense", f"Rs. {df_today[df_today['Category'] == 'Ghar ka Kharcha']['Cost'].sum():,.0f}")
 
         st.markdown("### 📋 Aaj Ka Record (Detailed)")
         if not df_today.empty:
-            st.table(df_today[['Item', 'Category', 'Sale', 'Profit', 'Payment']])
+            st.table(df_today[['Item', 'Category', 'Cost', 'Sale', 'Profit', 'Payment']])
         else:
             st.info("آج ابھی تک کوئی اینٹری نہیں کی گئی۔")
             
         if not df_month.empty:
             st.markdown("---")
-            chart_data = df_month.groupby(df_month['Date'].dt.date)['Sale'].sum().reset_index()
-            st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', title="Daily Sales Graph", color_discrete_sequence=['#00cc66']), use_container_width=True)
+            # Graph excluding Home Expenses for sales tracking
+            chart_df = df_month[df_month['Category'] != "Ghar ka Kharcha"]
+            if not chart_df.empty:
+                chart_data = chart_df.groupby(chart_df['Date'].dt.date)['Sale'].sum().reset_index()
+                st.plotly_chart(px.bar(chart_data, x='Date', y='Sale', title="Daily Shop Sales Graph", color_discrete_sequence=['#00cc66']), use_container_width=True)
     else: st.info("ریکارڈ خالی ہے۔")
 
 # --- SECTION 3: ARCHIVE ---
@@ -166,8 +193,14 @@ elif menu == "📂 Archive":
     st.header("📂 Purana Monthly Record")
     if not df.empty:
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
-        summary = df.groupby('Month_Year').agg({'Sale': 'sum', 'Profit': 'sum', 'Item': 'count'}).reset_index().sort_values(by='Month_Year', ascending=False)
+        # Updated summary to include Home Expenses
+        summary = df.groupby('Month_Year').apply(lambda x: pd.Series({
+            'Shop Profit': x[x['Category'] != 'Ghar ka Kharcha']['Profit'].sum(),
+            'Home Expense': x[x['Category'] == 'Ghar ka Kharcha']['Cost'].sum(),
+            'Net Savings': x[x['Category'] != 'Ghar ka Kharcha']['Profit'].sum() - x[x['Category'] == 'Ghar ka Kharcha']['Cost'].sum()
+        })).reset_index().sort_values(by='Month_Year', ascending=False)
         st.table(summary)
+        
         sel_m = st.selectbox("Select Month for Detail:", summary['Month_Year'].unique())
         detail_df = df[df['Month_Year'] == sel_m].sort_values(by='Date', ascending=False)
         st.dataframe(detail_df[COLS], use_container_width=True)
@@ -201,7 +234,8 @@ elif menu == "⚙️ Manage Records":
             row = df.iloc[st.session_state.edit_idx]
             with st.form("edit_form"):
                 e_date = st.date_input("Date", row['Date'])
-                e_cat = st.selectbox("Category", ["Accessories", "Repairing"], index=0 if row['Category']=="Accessories" else 1)
+                cat_list = ["Accessories", "Repairing", "Ghar ka Kharcha"]
+                e_cat = st.selectbox("Category", cat_list, index=cat_list.index(row['Category']) if row['Category'] in cat_list else 0)
                 e_item = st.text_input("Item Name", row['Item'])
                 e_cost = st.number_input("Cost", float(row['Cost']))
                 e_sale = st.number_input("Sale", float(row['Sale']))
@@ -213,7 +247,7 @@ elif menu == "⚙️ Manage Records":
                     df.at[st.session_state.edit_idx, 'Item'] = e_item
                     df.at[st.session_state.edit_idx, 'Cost'] = e_cost
                     df.at[st.session_state.edit_idx, 'Sale'] = e_sale
-                    df.at[st.session_state.edit_idx, 'Profit'] = e_sale - e_cost
+                    df.at[st.session_state.edit_idx, 'Profit'] = (e_sale - e_cost) if e_cat != "Ghar ka Kharcha" else 0
                     df.at[st.session_state.edit_idx, 'Payment'] = e_pay
                     
                     if save_data(df, f"Updated: {e_item}"):
@@ -221,4 +255,3 @@ elif menu == "⚙️ Manage Records":
                         st.success("Record Updated!")
                         st.rerun()
     else: st.info("No data to manage.")
-        
