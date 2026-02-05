@@ -138,16 +138,17 @@ elif menu == "📊 Dashboard":
         m_home_expense = df_month[df_month['Category'] == "Ghar ka Kharcha"]['Cost'].sum()
         net_savings = m_shop_profit - m_home_expense
 
-        target = 60000
+        # Target Updated to 90,000
+        target = 90000 
         completion_pct = (m_shop_profit / target) * 100 if target > 0 else 0
         
         row_cards = st.columns(2)
         with row_cards[0]:
             st.markdown(f"""
                 <div class="target-card">
-                    <h3 style="color:white !important;">🎯 Monthly Shop Profit</h3>
-                    <h1 style="color:white !important;">Rs. {m_shop_profit:,.0f}</h1>
-                    <div class="status-text">{completion_pct:.1f}% of Target</div>
+                    <h3 style="color:white !important;">🎯 Monthly Shop Profit Target</h3>
+                    <h1 style="color:white !important;">Rs. {m_shop_profit:,.0f} / {target:,}</h1>
+                    <div class="status-text">{completion_pct:.1f}% مکمل</div>
                 </div>
                 """, unsafe_allow_html=True)
         
@@ -176,13 +177,12 @@ elif menu == "📊 Dashboard":
             
     else: st.info("ریکارڈ خالی ہے۔")
 
-# --- SECTION 3: ARCHIVE (FIXED) ---
+# --- SECTION 3: ARCHIVE ---
 elif menu == "📂 Archive":
     st.header("📂 Purana Monthly Record")
     if not df.empty:
         df['Month_Year'] = df['Date'].dt.strftime('%B %Y')
         
-        # Archive summary me Sale wapis add kar di gayi hai
         summary = df.groupby('Month_Year').apply(lambda x: pd.Series({
             'Total Sale': x[x['Category'] != 'Ghar ka Kharcha']['Sale'].sum(),
             'Shop Profit': x[x['Category'] != 'Ghar ka Kharcha']['Profit'].sum(),
@@ -190,7 +190,6 @@ elif menu == "📂 Archive":
             'Net Savings': x[x['Category'] != 'Ghar ka Kharcha']['Profit'].sum() - x[x['Category'] == 'Ghar ka Kharcha']['Cost'].sum()
         })).reset_index().sort_values(by='Month_Year', ascending=False)
         
-        # Table display formatting
         st.table(summary.style.format({
             'Total Sale': 'Rs. {:,.0f}',
             'Shop Profit': 'Rs. {:,.0f}',
@@ -253,3 +252,4 @@ elif menu == "⚙️ Manage Records":
                         st.success("Record Updated!")
                         st.rerun()
     else: st.info("No data to manage.")
+        
