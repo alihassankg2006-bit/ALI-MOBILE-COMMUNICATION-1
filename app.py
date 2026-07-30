@@ -140,7 +140,6 @@ def get_logo():
 
 DB_FILE = "ali_mobiles_master_data.csv"
 
-# Column 9 بالکل ختم، اب صرف صحیح ترتیب
 COLUMNS = [
     "id",
     "module",
@@ -153,10 +152,11 @@ COLUMNS = [
     "col7",  # IMEI Number
     "col8",  # Condition (Used / New)
     "col9",  # Purchase Price (قیمتِ خرید)
-    "col10",  # Accept / Target Sell Price (متوقع سیل پرائز - آپ کے دیے ہوئے درست ریٹس)
+    "col10",  # Accept / Target Sell Price (متوقع سیل پرائز - آپ کے دیے ہوئے بالکل درست ریٹس)
     "timestamp",
 ]
 
+# آپ کے دیے ہوئے بالکل درست اور متفقہ ریٹس (Purchase Price اور Accept Price)
 INITIAL_MOBILES = [
     [
         1,
@@ -165,7 +165,7 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "Google Pixel 7 Pro",
-        "بلیک، 12GB/128GB",
+        "بلیک، 12/128",
         "Available",
         "N/A",
         "Used",
@@ -195,7 +195,7 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "iPhone 8 Plus",
-        "گولڈ، 256GB",
+        "256GB",
         "Available",
         "N/A",
         "Used",
@@ -210,7 +210,7 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "iPhone 8 Plus",
-        "گولڈ، 64GB",
+        "64GB",
         "Available",
         "N/A",
         "Used",
@@ -255,7 +255,7 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "iPhone XR",
-        "بلیک، 256GB",
+        "256GB، بلیک",
         "Available",
         "N/A",
         "Used",
@@ -332,7 +332,7 @@ def load_db():
     df = pd.read_csv(io.StringIO(contents.decoded_content.decode("utf-8")))
     if df.empty or len(df.columns) != len(COLUMNS):
       df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
-      save_db(df, "Initialized with corrected default mobiles")
+      save_db(df, "Initialized with exact correct prices")
     for col in df.columns:
       df[col] = df[col].astype(str)
     return df
@@ -340,7 +340,7 @@ def load_db():
     df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
     for col in df.columns:
       df[col] = df[col].astype(str)
-    save_db(df, "Initial POS Data with corrected mobiles")
+    save_db(df, "Initial POS Data with exact correct prices")
     return df
 
 
