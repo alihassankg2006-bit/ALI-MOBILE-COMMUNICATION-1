@@ -158,6 +158,7 @@ COLUMNS = [
 ]
 
 # Preloaded Default Mobiles Data matching 14 columns
+# col9 = Purchase Price (لینے کا خرچہ), col10 = Expected Sale Price (بیچنے کی قیمت)
 INITIAL_MOBILES = [
     [
         1,
@@ -791,7 +792,7 @@ elif page == "Udhar":
             save_db(st.session_state.df_master, "Deleted Udhar")
             st.rerun()
   else:
-    st.info("کوئی بقایا ادھار موجود نہیں ہے۔")
+    st.info("کوئی بقایا ادھار موجود نہیں۔")
 
 # ============================================================
 # MOBILE SALES PAGE
@@ -874,11 +875,14 @@ elif page == "Mobile Sales":
     if avail_mobs.empty:
       st.info("فروخت کے لیے کوئی موبائل دستیاب نہیں ہے۔")
     else:
-      mob_options = {
-          f"{row['col5']} {row['col6']} — IMEI: {row['col7']} (Cost:"
-          f" {row['col9']})": row["id"]
-          for _, row in avail_mobs.iterrows()
-      }
+      mob_options = {}
+      for _, row in avail_mobs.iterrows():
+        b_name = row["col5"] if pd.notna(row["col5"]) else ""
+        m_name = row["col6"] if pd.notna(row["col6"]) else ""
+        cost_val = row["col9"] if pd.notna(row["col9"]) else "0"
+        label = f"{b_name} {m_name} — Cost: {cost_val}"
+        mob_options[label] = row["id"]
+
       selected_choice = st.selectbox(
           "Select Available Mobile", list(mob_options.keys())
       )
@@ -886,11 +890,16 @@ elif page == "Mobile Sales":
       sel_row = avail_mobs[avail_mobs["id"] == selected_id].iloc[0]
 
       with st.form("sell_mob_form"):
+        default_sell = (
+            float(sel_row["col10"])
+            if pd.notna(sel_row["col10"]) and str(sel_row["col10"]).replace('.', '', 1).isdigit()
+            else 0.0
+        )
         act_price = st.number_input(
             "Actual Selling Price *",
             min_value=0.0,
             step=100.0,
-            value=float(sel_row["col10"]),
+            value=default_sell,
         )
         c_b1, c_b2, c_b3 = st.columns(3)
         b_name = c_b1.text_input("Buyer Name *")
@@ -910,7 +919,8 @@ elif page == "Mobile Sales":
                 get_formatted_date()
             )
             if save_db(st.session_state.df_master, "Completed Mobile Sale"):
-              profit = act_price - float(sel_row["col9"])
+              cost_price = float(sel_row["col9"]) if pd.notna(sel_row["col9"]) and str(sel_row["col9"]).replace('.', '', 1).isdigit() else 0.0
+              profit = act_price - cost_price
               st.success(
                   f"موبائل فروخت ہو گیا! خالص پرافٹ: PKR {profit:,.0f}"
               )
@@ -921,9 +931,12 @@ elif page == "Mobile Sales":
       for idx, r in mob_df.iterrows():
         with st.container(border=True):
           col_m1, col_m2 = st.columns([4, 1])
+          b_name = r["col5"] if pd.notna(r["col5"]) else ""
+          m_name = r["col6"] if pd.notna(r["col6"]) else ""
+          status = r["col7"] if pd.notna(r["col7"]) else ""
           col_m1.markdown(
-              f"**{r['col5']} {r['col6']}** (IMEI: {r['col7']}) | Status:"
-              f" **{r['col7']}**"
+              f"**{b_name} {m_name}** | Status:"
+              f" **{status}**"
           )
           if col_m2.button("Delete ❌", key=f"del_mob_{r['id']}"):
             st.session_state.df_master = st.session_state.df_master.drop(idx)
