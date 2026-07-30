@@ -157,8 +157,8 @@ COLUMNS = [
     "timestamp",
 ]
 
-# Preloaded Default Mobiles Data matching 14 columns
-# col9 = Purchase Price (لینے کا خرچہ), col10 = Expected Sale Price (بیچنے کی قیمت)
+# Preloaded Default Mobiles Data matching your exact list
+# col9 = Purchase Price (خرید قیمت), col11 = Actual/Selling Price
 INITIAL_MOBILES = [
     [
         1,
@@ -170,10 +170,10 @@ INITIAL_MOBILES = [
         "بلیک، 12GB/128GB",
         "N/A",
         "Available",
+        "N/A",
         "48000",
-        "85000",
         "Used",
-        "85000",
+        "48000",
         "2026-06-01 12:00",
     ],
     [
@@ -186,10 +186,10 @@ INITIAL_MOBILES = [
         "وائٹ، Non-PTA، CPID Approved",
         "N/A",
         "Available",
+        "N/A",
         "42000",
-        "65000",
         "Used",
-        "65000",
+        "42000",
         "2026-06-01 12:00",
     ],
     [
@@ -202,10 +202,10 @@ INITIAL_MOBILES = [
         "گولڈ، 256GB",
         "N/A",
         "Available",
+        "N/A",
         "20000",
-        "30000",
         "Used",
-        "30000",
+        "20000",
         "2026-06-01 12:00",
     ],
     [
@@ -218,10 +218,10 @@ INITIAL_MOBILES = [
         "گولڈ، 64GB",
         "N/A",
         "Available",
+        "N/A",
         "7000",
-        "18000",
         "Used",
-        "18000",
+        "7000",
         "2026-06-01 12:00",
     ],
     [
@@ -234,10 +234,10 @@ INITIAL_MOBILES = [
         "Converted to iPhone 17",
         "N/A",
         "Available",
+        "N/A",
         "25000",
-        "45000",
         "Used",
-        "45000",
+        "25000",
         "2026-06-01 12:00",
     ],
     [
@@ -250,10 +250,10 @@ INITIAL_MOBILES = [
         "—",
         "N/A",
         "Available",
+        "N/A",
         "13500",
-        "25000",
         "Used",
-        "25000",
+        "13500",
         "2026-06-01 12:00",
     ],
     [
@@ -266,10 +266,10 @@ INITIAL_MOBILES = [
         "بلیک، 256GB",
         "N/A",
         "Available",
+        "N/A",
         "22000",
-        "40000",
         "Used",
-        "40000",
+        "22000",
         "2026-06-01 12:00",
     ],
     [
@@ -282,10 +282,10 @@ INITIAL_MOBILES = [
         "صاف کنڈیشن",
         "N/A",
         "Available",
+        "N/A",
         "10000",
-        "22000",
         "Used",
-        "22000",
+        "10000",
         "2026-06-01 12:00",
     ],
     [
@@ -298,10 +298,10 @@ INITIAL_MOBILES = [
         "2024",
         "N/A",
         "Available",
+        "N/A",
         "13500",
-        "22000",
         "New",
-        "22000",
+        "13500",
         "2026-06-01 12:00",
     ],
     [
@@ -314,10 +314,10 @@ INITIAL_MOBILES = [
         "—",
         "N/A",
         "Available",
+        "N/A",
         "13500",
-        "18000",
         "Used",
-        "18000",
+        "13500",
         "2026-06-01 12:00",
     ],
     [
@@ -330,10 +330,10 @@ INITIAL_MOBILES = [
         "—",
         "N/A",
         "Available",
+        "N/A",
         "5000",
-        "15000",
         "Used",
-        "15000",
+        "5000",
         "2026-06-01 12:00",
     ],
 ]
@@ -480,7 +480,7 @@ if page == "Dashboard":
   if not mob_df.empty:
     sold_mob = mob_df[mob_df["col7"] == "Sold"]
     for _, r in sold_mob.iterrows():
-      prof = float(r["col11"] or 0) - float(r["col9"] or 0)
+      prof = float(r["col11"] or 0) - float(r["col10"] or 0)
       s_date = str(r["timestamp"])
       if curr_date in s_date:
         tod_mob += prof
@@ -568,7 +568,7 @@ if page == "Dashboard":
     if not mob_df.empty:
       sold_all = mob_df[mob_df["col7"] == "Sold"]
       for _, r in sold_all.iterrows():
-        mobile_profit += float(r["col11"] or 0) - float(r["col9"] or 0)
+        mobile_profit += float(r["col11"] or 0) - float(r["col10"] or 0)
     repair_profit = (
         rep_df["col8"].astype(float).sum() if not rep_df.empty else 0
     )
@@ -616,7 +616,15 @@ if page == "Dashboard":
   stock_val = 0
   if not mob_df.empty:
     avail_mobs = mob_df[mob_df["col7"] == "Available"]
-    stock_val = avail_mobs["col9"].astype(float).sum()
+    stock_val = (
+        avail_mobs["col10"]
+        .apply(
+            lambda x: float(x)
+            if pd.notna(x) and str(x).replace(".", "", 1).isdigit()
+            else 0.0
+        )
+        .sum()
+    )
   col8.metric("Available Stock Value", f"PKR {stock_val:,.0f}")
 
 # ============================================================
@@ -816,7 +824,7 @@ elif page == "Mobile Sales":
   with tab1:
     with st.form("purchase_mob_form", clear_on_submit=True):
       c1, c2, c3 = st.columns(3)
-      c_name = c1.text_input("Customer / Seller Name *")
+      c_name = c1.text_input("Customer / Seller Name *", value="زبیر مردان")
       c_phone = c2.text_input("Mobile Number *")
       c_cnic = c3.text_input("Seller CNIC *")
 
@@ -826,12 +834,11 @@ elif page == "Mobile Sales":
       imei = c6.text_input("IMEI Number *")
 
       c7, c8, c9 = st.columns(3)
-      condition = c7.selectbox("Condition", ["New", "Used"])
-      p_price = c8.number_input("Purchase Price *", min_value=0.0, step=100.0)
-      s_price = c9.number_input("Expected Selling Price", min_value=0.0, step=100.0)
+      condition = c7.selectbox("Condition", ["Used", "New"])
+      p_price = c8.number_input("Purchase Price (خرید قیمت) *", min_value=0.0, step=100.0)
 
       if st.form_submit_button("Save to Stock", use_container_width=True):
-        if not c_name or not brand or not model or not imei or p_price <= 0:
+        if not c_name or not brand or not model or p_price <= 0:
           st.error("برائے مہربانی تمام لازمی معلومات درج کریں۔")
         else:
           new_id = (
@@ -850,10 +857,10 @@ elif page == "Mobile Sales":
                   model,
                   imei,
                   "Available",
+                  "N/A",
                   str(p_price),
-                  str(s_price),
                   condition,
-                  str(s_price),
+                  str(p_price),
                   get_formatted_date(),
               ]],
               columns=COLUMNS,
@@ -879,8 +886,8 @@ elif page == "Mobile Sales":
       for _, row in avail_mobs.iterrows():
         b_name = row["col5"] if pd.notna(row["col5"]) else ""
         m_name = row["col6"] if pd.notna(row["col6"]) else ""
-        cost_val = row["col9"] if pd.notna(row["col9"]) else "0"
-        label = f"{b_name} {m_name} — Cost: {cost_val}"
+        cost_val = row["col10"] if pd.notna(row["col10"]) else "0"
+        label = f"{b_name} {m_name} — خرید قیمت: {cost_val}"
         mob_options[label] = row["id"]
 
       selected_choice = st.selectbox(
@@ -919,7 +926,7 @@ elif page == "Mobile Sales":
                 get_formatted_date()
             )
             if save_db(st.session_state.df_master, "Completed Mobile Sale"):
-              cost_price = float(sel_row["col9"]) if pd.notna(sel_row["col9"]) and str(sel_row["col9"]).replace('.', '', 1).isdigit() else 0.0
+              cost_price = float(sel_row["col10"]) if pd.notna(sel_row["col10"]) and str(sel_row["col10"]).replace('.', '', 1).isdigit() else 0.0
               profit = act_price - cost_price
               st.success(
                   f"موبائل فروخت ہو گیا! خالص پرافٹ: PKR {profit:,.0f}"
