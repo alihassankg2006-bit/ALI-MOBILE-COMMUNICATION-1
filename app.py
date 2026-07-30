@@ -896,7 +896,14 @@ elif page == "Mobile Sales":
       selected_id = mob_options[selected_choice]
       sel_row = avail_mobs[avail_mobs["id"] == selected_id].iloc[0]
 
-      # Display full details of the selected mobile
+      # Safe float conversion helper for purchase price display
+      raw_cost = sel_row["col10"]
+      if pd.notna(raw_cost) and str(raw_cost).replace('.', '', 1).isdigit():
+        display_cost = float(raw_cost)
+      else:
+        display_cost = 0.0
+
+      # Display full details of the selected mobile safely
       st.markdown("---")
       st.markdown("### 📋 منتخب کردہ موبائل کی مکمل تفصیلات:")
       d_col1, d_col2, d_col3 = st.columns(3)
@@ -904,21 +911,16 @@ elif page == "Mobile Sales":
       d_col1.markdown(f"**موبائل نمبر:** {sel_row['col2']}")
       d_col2.markdown(f"**آئی ڈی کارڈ نمبر:** {sel_row['col3']}")
       d_col2.markdown(f"**IMEI نمبر:** {sel_row['col4']}")
-      d_col3.markdown(f"**خرید قیمت:** PKR {float(sel_row['col10']):,.0f}")
-      d_col3.markdown(f"**تخلیق/خرید کی تاریخ:** {sel_row['timestamp']}")
+      d_col3.markdown(f"**خرید قیمت:** PKR {display_cost:,.0f}")
+      d_col3.markdown(f"**خرید کی تاریخ:** {sel_row['timestamp']}")
       st.markdown("---")
 
       with st.form("sell_mob_form"):
-        default_sell = (
-            float(sel_row["col10"])
-            if pd.notna(sel_row["col10"]) and str(sel_row["col10"]).replace('.', '', 1).isdigit()
-            else 0.0
-        )
         act_price = st.number_input(
             "Actual Selling Price (فروخت قیمت) *",
             min_value=0.0,
             step=100.0,
-            value=default_sell,
+            value=display_cost,
         )
         c_b1, c_b2, c_b3 = st.columns(3)
         b_name = c_b1.text_input("Buyer Name (خریدار کا نام) *")
@@ -938,8 +940,7 @@ elif page == "Mobile Sales":
                 get_formatted_date()
             )
             if save_db(st.session_state.df_master, "Completed Mobile Sale"):
-              cost_price = float(sel_row["col10"]) if pd.notna(sel_row["col10"]) and str(sel_row["col10"]).replace('.', '', 1).isdigit() else 0.0
-              profit = act_price - cost_price
+              profit = act_price - display_cost
               st.success(
                   f"موبائل فروخت ہو گیا! خالص پرافٹ: PKR {profit:,.0f}"
               )
