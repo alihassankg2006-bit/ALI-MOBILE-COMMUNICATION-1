@@ -158,7 +158,7 @@ COLUMNS = [
 ]
 
 # Preloaded Default Mobiles Data matching your exact list
-# col9 = Purchase Price (خرید قیمت), col11 = Actual/Selling Price
+# col1 = Owner Name (مالک کا نام), col2 = Phone/Contact, col3 = CNIC, col4 = IMEI, col5 = Brand, col6 = Color/Variant, col7 = Status, col10 = Purchase Price (خرید قیمت), col11 = Selling Price
 INITIAL_MOBILES = [
     [
         1,
@@ -168,8 +168,8 @@ INITIAL_MOBILES = [
         "N/A",
         "Google Pixel 7 Pro",
         "بلیک، 12GB/128GB",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "48000",
         "Used",
@@ -184,8 +184,8 @@ INITIAL_MOBILES = [
         "N/A",
         "Google Pixel 7 Pro",
         "وائٹ، Non-PTA، CPID Approved",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "42000",
         "Used",
@@ -200,8 +200,8 @@ INITIAL_MOBILES = [
         "N/A",
         "iPhone 8 Plus",
         "گولڈ، 256GB",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "20000",
         "Used",
@@ -216,8 +216,8 @@ INITIAL_MOBILES = [
         "N/A",
         "iPhone 8 Plus",
         "گولڈ، 64GB",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "7000",
         "Used",
@@ -232,8 +232,8 @@ INITIAL_MOBILES = [
         "N/A",
         "iPhone XR",
         "Converted to iPhone 17",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "25000",
         "Used",
@@ -248,8 +248,8 @@ INITIAL_MOBILES = [
         "N/A",
         "iPhone 7 Plus",
         "—",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "13500",
         "Used",
@@ -264,8 +264,8 @@ INITIAL_MOBILES = [
         "N/A",
         "iPhone XR",
         "بلیک، 256GB",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "22000",
         "Used",
@@ -280,8 +280,8 @@ INITIAL_MOBILES = [
         "N/A",
         "Vivo V20",
         "صاف کنڈیشن",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "10000",
         "Used",
@@ -296,8 +296,8 @@ INITIAL_MOBILES = [
         "N/A",
         "Tecno Spark Go",
         "2024",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "13500",
         "New",
@@ -312,8 +312,8 @@ INITIAL_MOBILES = [
         "N/A",
         "Realme C21",
         "—",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "13500",
         "Used",
@@ -328,8 +328,8 @@ INITIAL_MOBILES = [
         "N/A",
         "Vivo V12",
         "—",
-        "N/A",
         "Available",
+        "N/A",
         "N/A",
         "5000",
         "Used",
@@ -824,13 +824,13 @@ elif page == "Mobile Sales":
   with tab1:
     with st.form("purchase_mob_form", clear_on_submit=True):
       c1, c2, c3 = st.columns(3)
-      c_name = c1.text_input("Customer / Seller Name *", value="زبیر مردان")
+      c_name = c1.text_input("Customer / Seller Name (مالک کا نام) *", value="زبیر مردان")
       c_phone = c2.text_input("Mobile Number *")
-      c_cnic = c3.text_input("Seller CNIC *")
+      c_cnic = c3.text_input("Seller CNIC (آئی ڈی کارڈ نمبر) *")
 
       c4, c5, c6 = st.columns(3)
       brand = c4.text_input("Brand *")
-      model = c5.text_input("Model *")
+      model = c5.text_input("Color / Variant (کلر / ویریئنٹ) *")
       imei = c6.text_input("IMEI Number *")
 
       c7, c8, c9 = st.columns(3)
@@ -855,8 +855,8 @@ elif page == "Mobile Sales":
                   c_cnic,
                   brand,
                   model,
-                  imei,
                   "Available",
+                  "N/A",
                   "N/A",
                   str(p_price),
                   condition,
@@ -887,7 +887,7 @@ elif page == "Mobile Sales":
         b_name = row["col5"] if pd.notna(row["col5"]) else ""
         m_name = row["col6"] if pd.notna(row["col6"]) else ""
         cost_val = row["col10"] if pd.notna(row["col10"]) else "0"
-        label = f"{b_name} {m_name} — خرید قیمت: {cost_val}"
+        label = f"{b_name} ({m_name}) — خرید قیمت: PKR {cost_val}"
         mob_options[label] = row["id"]
 
       selected_choice = st.selectbox(
@@ -896,6 +896,18 @@ elif page == "Mobile Sales":
       selected_id = mob_options[selected_choice]
       sel_row = avail_mobs[avail_mobs["id"] == selected_id].iloc[0]
 
+      # Display full details of the selected mobile
+      st.markdown("---")
+      st.markdown("### 📋 منتخب کردہ موبائل کی مکمل تفصیلات:")
+      d_col1, d_col2, d_col3 = st.columns(3)
+      d_col1.markdown(f"**مالک کا نام:** {sel_row['col1']}")
+      d_col1.markdown(f"**موبائل نمبر:** {sel_row['col2']}")
+      d_col2.markdown(f"**آئی ڈی کارڈ نمبر:** {sel_row['col3']}")
+      d_col2.markdown(f"**IMEI نمبر:** {sel_row['col4']}")
+      d_col3.markdown(f"**خرید قیمت:** PKR {float(sel_row['col10']):,.0f}")
+      d_col3.markdown(f"**تخلیق/خرید کی تاریخ:** {sel_row['timestamp']}")
+      st.markdown("---")
+
       with st.form("sell_mob_form"):
         default_sell = (
             float(sel_row["col10"])
@@ -903,13 +915,13 @@ elif page == "Mobile Sales":
             else 0.0
         )
         act_price = st.number_input(
-            "Actual Selling Price *",
+            "Actual Selling Price (فروخت قیمت) *",
             min_value=0.0,
             step=100.0,
             value=default_sell,
         )
         c_b1, c_b2, c_b3 = st.columns(3)
-        b_name = c_b1.text_input("Buyer Name *")
+        b_name = c_b1.text_input("Buyer Name (خریدار کا نام) *")
         b_phone = c_b2.text_input("Buyer Phone *")
         b_cnic = c_b3.text_input("Buyer CNIC *")
 
