@@ -278,13 +278,13 @@ if page == "Dashboard":
   curr_date = get_current_date()
   curr_ym = get_current_year_month()
 
-  # Helper filtering from master DataFrame
+
   def get_module_df(mod_name):
     if df_master.empty:
       return pd.DataFrame()
     return df_master[df_master["module"] == mod_name]
 
-  # --- CALCULATE PROFITS ---
+
   mob_df = get_module_df("Mobile")
   tod_mob, m_mob = 0, 0
   if not mob_df.empty:
@@ -629,7 +629,6 @@ elif page == "Mobile Sales":
         else:
           global df_master
           new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
-          # col1:c_name, col2:c_phone, col3:c_cnic, col4:brand, col5:model, col6:imei, col7:status('Available'), col8:p_price, col9:s_price, col10:condition, col11:actual_sale(0), col12:purchase_date
           new_row = pd.DataFrame(
               [[
                   new_id,
@@ -690,10 +689,10 @@ elif page == "Mobile Sales":
           if not b_name or act_price <= 0:
             st.error("برائے مہربانی خریدار کا نام اور قیمت درج کریں۔")
           else:
+            global df_master
             idx = sel_row.name
-            df_master.loc[idx, "col7"] = "Sold"  # Status
-            df_master.loc[idx, "col11"] = str(act_price)  # actual selling price
-            # Save buyer info in spare columns if needed or update timestamp
+            df_master.loc[idx, "col7"] = "Sold"
+            df_master.loc[idx, "col11"] = str(act_price)
             df_master.loc[idx, "timestamp"] = get_formatted_date()
             if save_db(df_master, "Completed Mobile Sale"):
               profit = act_price - float(sel_row["col9"])
@@ -712,6 +711,7 @@ elif page == "Mobile Sales":
               f" **{r['col7']}**"
           )
           if col_m2.button("Delete ❌", key=f"del_mob_{r['id']}"):
+            global df_master
             df_master = df_master.drop(idx)
             save_db(df_master, "Deleted Mobile Entry")
             st.rerun()
@@ -781,6 +781,7 @@ elif page == "Accessories":
           f" **PKR {float(ac['col5']):,.0f}**"
       )
       if col_a2.button("Delete ❌", key=f"del_acc_{ac['id']}"):
+        global df_master
         df_master = df_master.drop(idx)
         save_db(df_master, "Deleted Accessory Sale")
         st.rerun()
@@ -849,6 +850,7 @@ elif page == "Repair":
             f" {float(r['col7']):,.0f}**"
         )
         if colB.button("Delete ❌", key=f"del_rep_{r['id']}"):
+          global df_master
           df_master = df_master.drop(idx)
           save_db(df_master, "Deleted Repair")
           st.rerun()
@@ -960,9 +962,13 @@ elif page == "History":
     for idx, r in df_master.tail(30).iloc[::-1].iterrows():
       with st.container(border=True):
         c1, c2, c3 = st.columns([2, 3, 1])
-        c1.markdown(f"**[{r['module']}]**<br><small>{r['timestamp']}</small>", unsafe_allow_html=True)
+        c1.markdown(
+            f"**[{r['module']}]**<br><small>{r['timestamp']}</small>",
+            unsafe_allow_html=True,
+        )
         c2.markdown(f"Details: {r['col2']} | {r['col3']}")
         if c3.button("Delete ❌", key=f"del_master_{r['id']}"):
+          global df_master
           df_master = df_master.drop(idx)
           save_db(df_master, "Deleted Record")
           st.rerun()
