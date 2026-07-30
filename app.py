@@ -140,7 +140,7 @@ def get_logo():
 
 DB_FILE = "ali_mobiles_master_data.csv"
 
-# بالکل درست 12 کالمز کی ترتیب (Column 9 کو ہمیشہ کے لیے ختم کر دیا گیا ہے)
+# Column 9 بالکل ختم، اب صرف صحیح ترتیب
 COLUMNS = [
     "id",
     "module",
@@ -153,7 +153,7 @@ COLUMNS = [
     "col7",  # IMEI Number
     "col8",  # Condition (Used / New)
     "col9",  # Purchase Price (قیمتِ خرید)
-    "col10",  # Accept / Target Sell Price
+    "col10",  # Accept / Target Sell Price (متوقع سیل پرائز - آپ کے دیے ہوئے درست ریٹس)
     "timestamp",
 ]
 
@@ -170,7 +170,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "48000",
-        "55000",
+        "85000",
         "2026-06-01 12:00",
     ],
     [
@@ -180,12 +180,12 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "Google Pixel 7 Pro",
-        "وائٹ، Non-PTA",
+        "وائٹ، Non-PTA، CPID Approved",
         "Available",
         "N/A",
         "Used",
         "42000",
-        "48000",
+        "65000",
         "2026-06-01 12:00",
     ],
     [
@@ -200,7 +200,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "20000",
-        "25000",
+        "30000",
         "2026-06-01 12:00",
     ],
     [
@@ -215,7 +215,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "7000",
-        "10000",
+        "18000",
         "2026-06-01 12:00",
     ],
     [
@@ -230,7 +230,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "25000",
-        "30000",
+        "45000",
         "2026-06-01 12:00",
     ],
     [
@@ -245,7 +245,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "13500",
-        "16000",
+        "25000",
         "2026-06-01 12:00",
     ],
     [
@@ -260,7 +260,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "22000",
-        "26000",
+        "40000",
         "2026-06-01 12:00",
     ],
     [
@@ -270,12 +270,12 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "Vivo V20",
-        "صاف کنڈیشن",
+        "—",
         "Available",
         "N/A",
         "Used",
         "10000",
-        "13000",
+        "22000",
         "2026-06-01 12:00",
     ],
     [
@@ -290,7 +290,7 @@ INITIAL_MOBILES = [
         "N/A",
         "New",
         "13500",
-        "15500",
+        "22000",
         "2026-06-01 12:00",
     ],
     [
@@ -305,7 +305,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "13500",
-        "16000",
+        "18000",
         "2026-06-01 12:00",
     ],
     [
@@ -320,7 +320,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "5000",
-        "7000",
+        "15000",
         "2026-06-01 12:00",
     ],
 ]
@@ -332,7 +332,7 @@ def load_db():
     df = pd.read_csv(io.StringIO(contents.decoded_content.decode("utf-8")))
     if df.empty or len(df.columns) != len(COLUMNS):
       df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
-      save_db(df, "Initialized with default mobiles")
+      save_db(df, "Initialized with corrected default mobiles")
     for col in df.columns:
       df[col] = df[col].astype(str)
     return df
@@ -340,7 +340,7 @@ def load_db():
     df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
     for col in df.columns:
       df[col] = df[col].astype(str)
-    save_db(df, "Initial POS Data with default mobiles")
+    save_db(df, "Initial POS Data with corrected mobiles")
     return df
 
 
@@ -635,7 +635,6 @@ if page == "Dashboard":
   col6.metric("Shop Expenses", f"PKR {shop_expenses:,.0f}")
   col7.metric("Home Expenses", f"PKR {home_expenses:,.0f}")
 
-  # Available Stock Value Calculation (Strictly Purchase Price col9)
   stock_val = 0
   if not mob_df.empty:
     avail_mobs = mob_df[mob_df["col6"] == "Available"]
@@ -877,7 +876,6 @@ elif page == "Mobile Sales":
               if not st.session_state.df_master.empty
               else 1
           )
-          # درست کالم میپنگ (Column 9 = Purchase Price, Column 10 = Target Price)
           new_row = pd.DataFrame(
               [[
                   str(new_id),
