@@ -170,7 +170,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "48000",
-        "48000",
+        "55000",
         "2026-06-01 12:00",
     ],
     [
@@ -180,13 +180,13 @@ INITIAL_MOBILES = [
         "N/A",
         "N/A",
         "Google Pixel 7 Pro",
-        "وائٹ، Non-PTA، CPID Approved",
+        "وائٹ، Non-PTA",
         "Available",
         "N/A",
         "N/A",
         "Used",
         "42000",
-        "42000",
+        "48000",
         "2026-06-01 12:00",
     ],
     [
@@ -202,7 +202,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "20000",
-        "20000",
+        "25000",
         "2026-06-01 12:00",
     ],
     [
@@ -218,7 +218,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "7000",
-        "7000",
+        "10000",
         "2026-06-01 12:00",
     ],
     [
@@ -234,7 +234,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "25000",
-        "25000",
+        "30000",
         "2026-06-01 12:00",
     ],
     [
@@ -250,7 +250,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "13500",
-        "13500",
+        "16000",
         "2026-06-01 12:00",
     ],
     [
@@ -266,7 +266,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "22000",
-        "22000",
+        "26000",
         "2026-06-01 12:00",
     ],
     [
@@ -282,7 +282,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "10000",
-        "10000",
+        "13000",
         "2026-06-01 12:00",
     ],
     [
@@ -298,7 +298,7 @@ INITIAL_MOBILES = [
         "N/A",
         "New",
         "13500",
-        "13500",
+        "15500",
         "2026-06-01 12:00",
     ],
     [
@@ -314,7 +314,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "13500",
-        "13500",
+        "16000",
         "2026-06-01 12:00",
     ],
     [
@@ -330,7 +330,7 @@ INITIAL_MOBILES = [
         "N/A",
         "Used",
         "5000",
-        "5000",
+        "7000",
         "2026-06-01 12:00",
     ],
 ]
@@ -343,7 +343,6 @@ def load_db():
     if df.empty or len(df.columns) != len(COLUMNS):
       df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
       save_db(df, "Initialized with default mobiles")
-    # Ensure all columns are string type to avoid edit type mismatch bugs
     for col in df.columns:
       df[col] = df[col].astype(str)
     return df
@@ -646,21 +645,16 @@ if page == "Dashboard":
   col6.metric("Shop Expenses", f"PKR {shop_expenses:,.0f}")
   col7.metric("Home Expenses", f"PKR {home_expenses:,.0f}")
 
-  # Available Stock Value Calculation
+  # Available Stock Value Calculation (Strictly Purchase Price col10)
   stock_val = 0
   if not mob_df.empty:
     avail_mobs = mob_df[mob_df["col7"] == "Available"]
     for _, r in avail_mobs.iterrows():
-      val = 0
-      for col_key in ["col10", "col11"]:
-        try:
-          val_candidate = float(str(r[col_key]).replace(",", "") or 0)
-          if val_candidate > 0:
-            val = val_candidate
-            break
-        except:
-          pass
-      stock_val += val
+      try:
+        val = float(str(r["col10"]).replace(",", "") or 0)
+        stock_val += val
+      except:
+        pass
   col8.metric("Available Stock Value", f"PKR {stock_val:,.0f}")
 
 # ============================================================
@@ -878,23 +872,28 @@ elif page == "Mobile Sales":
       imei = c6.text_input("IMEI Number")
 
       c7, c8, c9 = st.columns(3)
-      condition = c7.selectbox("Condition", ["Used", "New"])
+      condition = c7.selectbox("Condition (حالت)", ["Used", "New"])
       p_price = c8.number_input(
-          "Purchase Price (خرید قیمت) *", min_value=0.0, step=100.0
+          "Purchase Price (قیمتِ خرید) *", min_value=0.0, step=100.0
       )
       s_price_target = c9.number_input(
-          "Target Selling Price (اکسیپٹ ٹو پرائز) *", min_value=0.0, step=100.0
+          "Target Selling Price (متوقع سیل پرائز)", min_value=0.0, step=100.0
       )
 
       if st.form_submit_button("Save to Stock", use_container_width=True):
         if not brand or not model or p_price <= 0:
-          st.error("برائے مہربانی برانڈ، ماڈل اور قیمت درج کریں۔")
+          st.error("برائے مہربانی برانڈ، ماڈل اور قیمتِ خرید درج کریں۔")
         else:
           new_id = (
               int(st.session_state.df_master["id"].max() + 1)
               if not st.session_state.df_master.empty
               else 1
           )
+          # Correct Columns mapping:
+          # col7 = Status ('Available')
+          # col9 = Condition ('Used' / 'New')
+          # col10 = Purchase Price
+          # col11 = Accept/Target Sell Price
           new_row = pd.DataFrame(
               [[
                   str(new_id),
@@ -937,7 +936,7 @@ elif page == "Mobile Sales":
         m_name = row["col6"] if pd.notna(row["col6"]) else ""
         cost_val = row["col10"] if pd.notna(row["col10"]) else "0"
         label = (
-            f"{b_name} ({m_name}) — خرید قیمت: PKR {cost_val} [RowID: {idx}]"
+            f"{b_name} ({m_name}) — قیمتِ خرید: PKR {cost_val} [RowID: {idx}]"
         )
         mob_options[label] = idx
 
@@ -960,13 +959,13 @@ elif page == "Mobile Sales":
       d_col1.markdown(f"**موبائل نمبر:** {sel_row['col2']}")
       d_col2.markdown(f"**آئی ڈی کارڈ نمبر:** {sel_row['col3']}")
       d_col2.markdown(f"**IMEI نمبر:** {sel_row['col4']}")
-      d_col3.markdown(f"**خرید قیمت:** PKR {display_cost:,.0f}")
+      d_col3.markdown(f"**قیمتِ خرید:** PKR {display_cost:,.0f}")
       d_col3.markdown(f"**خرید کی تاریخ:** {sel_row['timestamp']}")
       st.markdown("---")
 
       with st.form("sell_mob_form"):
         act_price = st.number_input(
-            "Actual Selling Price (فروخت قیمت) *",
+            "Actual Selling Price (حتمی فروخت قیمت) *",
             min_value=0.0,
             step=100.0,
             value=display_cost,
@@ -1040,6 +1039,12 @@ elif page == "Mobile Sales":
                 ["Available", "Sold"],
                 index=0 if r["col7"] == "Available" else 1,
             )
+            e_condition = st.selectbox(
+                "Condition",
+                ["Used", "New"],
+                index=0 if str(r["col9"]) == "Used" else 1,
+            )
+
             try:
               cp_val = float(str(r["col10"]).replace(",", "") or 0)
             except:
@@ -1049,8 +1054,10 @@ elif page == "Mobile Sales":
             except:
               sp_val = 0.0
 
-            e_cp = st.number_input("Purchase Price", value=cp_val)
-            e_sp = st.number_input("Accept/Sell Price", value=sp_val)
+            e_cp = st.number_input("Purchase Price (قیمتِ خرید)", value=cp_val)
+            e_sp = st.number_input(
+                "Target Sell Price (متوقع سیل پرائز)", value=sp_val
+            )
 
             if st.form_submit_button("Update Changes"):
               st.session_state.df_master.loc[idx, "col1"] = str(e_owner)
@@ -1058,11 +1065,12 @@ elif page == "Mobile Sales":
               st.session_state.df_master.loc[idx, "col5"] = str(e_brand)
               st.session_state.df_master.loc[idx, "col6"] = str(e_model)
               st.session_state.df_master.loc[idx, "col7"] = str(e_status)
+              st.session_state.df_master.loc[idx, "col9"] = str(e_condition)
               st.session_state.df_master.loc[idx, "col10"] = str(e_cp)
               st.session_state.df_master.loc[idx, "col11"] = str(e_sp)
               save_db(st.session_state.df_master, "Updated Mobile Entry")
               st.session_state[f"edit_mode_{idx}"] = False
-              st.success("موبائل کا ریکارڈ اپڈیٹ ہو گیا ہے!")
+              st.success("موبائل کا ریکارڈ بالکل درست اپڈیٹ ہو گیا ہے!")
               st.rerun()
     else:
       st.info("کوئی ریکارڈ موجود نہیں۔")
@@ -1415,9 +1423,9 @@ elif page == "Reports":
         "Status",
         "IMEI",
         "Column 9",
-        "Condition",
+        "Condition (حالت)",
         "قیمت خرید (Purchase Price)",
-        "Accept Price (سیل پرائز)",
+        "Accept Price (متوقع سیل پرائز)",
         "Timestamp",
     ]
     st.dataframe(display_df, use_container_width=True)
@@ -1447,9 +1455,9 @@ elif page == "Inventory":
         "Status",
         "IMEI",
         "Column 9",
-        "Condition",
+        "Condition (حالت)",
         "قیمت خرید (Purchase Price)",
-        "Accept Price (سیل پرائز)",
+        "Accept Price (متوقع سیل پرائز)",
         "Timestamp",
     ]
     st.dataframe(inv_display, use_container_width=True)
