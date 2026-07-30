@@ -138,7 +138,7 @@ def get_logo():
   return None
 
 
-# Master Data Schema for GitHub CSV Storage
+# Master Data Schema for GitHub CSV Storage (Total 14 Columns)
 DB_FILE = "ali_mobiles_master_data.csv"
 COLUMNS = [
     "id",
@@ -157,7 +157,7 @@ COLUMNS = [
     "timestamp",
 ]
 
-# Preloaded Default Mobiles Data provided by user
+# Preloaded Default Mobiles Data matching 14 columns
 INITIAL_MOBILES = [
     [
         1,
@@ -172,6 +172,7 @@ INITIAL_MOBILES = [
         "48000",
         "85000",
         "Used",
+        "85000",
         "2026-06-01 12:00",
     ],
     [
@@ -187,6 +188,7 @@ INITIAL_MOBILES = [
         "42000",
         "65000",
         "Used",
+        "65000",
         "2026-06-01 12:00",
     ],
     [
@@ -202,6 +204,7 @@ INITIAL_MOBILES = [
         "20000",
         "30000",
         "Used",
+        "30000",
         "2026-06-01 12:00",
     ],
     [
@@ -217,6 +220,7 @@ INITIAL_MOBILES = [
         "7000",
         "18000",
         "Used",
+        "18000",
         "2026-06-01 12:00",
     ],
     [
@@ -232,6 +236,7 @@ INITIAL_MOBILES = [
         "25000",
         "45000",
         "Used",
+        "45000",
         "2026-06-01 12:00",
     ],
     [
@@ -247,6 +252,7 @@ INITIAL_MOBILES = [
         "13500",
         "25000",
         "Used",
+        "25000",
         "2026-06-01 12:00",
     ],
     [
@@ -262,6 +268,7 @@ INITIAL_MOBILES = [
         "22000",
         "40000",
         "Used",
+        "40000",
         "2026-06-01 12:00",
     ],
     [
@@ -277,6 +284,7 @@ INITIAL_MOBILES = [
         "10000",
         "22000",
         "Used",
+        "22000",
         "2026-06-01 12:00",
     ],
     [
@@ -292,6 +300,7 @@ INITIAL_MOBILES = [
         "13500",
         "22000",
         "New",
+        "22000",
         "2026-06-01 12:00",
     ],
     [
@@ -307,6 +316,7 @@ INITIAL_MOBILES = [
         "13500",
         "18000",
         "Used",
+        "18000",
         "2026-06-01 12:00",
     ],
     [
@@ -322,6 +332,7 @@ INITIAL_MOBILES = [
         "5000",
         "15000",
         "Used",
+        "15000",
         "2026-06-01 12:00",
     ],
 ]
@@ -331,7 +342,7 @@ def load_db():
   try:
     contents = repo.get_contents(DB_FILE)
     df = pd.read_csv(io.StringIO(contents.decoded_content.decode("utf-8")))
-    if df.empty:
+    if df.empty or len(df.columns) != len(COLUMNS):
       df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
       save_db(df, "Initialized with default mobiles")
     return df
@@ -468,8 +479,8 @@ if page == "Dashboard":
   if not mob_df.empty:
     sold_mob = mob_df[mob_df["col7"] == "Sold"]
     for _, r in sold_mob.iterrows():
-      prof = float(r["col11"] or 0) - float(r["col8"] or 0)
-      s_date = str(r["col12"])
+      prof = float(r["col11"] or 0) - float(r["col9"] or 0)
+      s_date = str(r["timestamp"])
       if curr_date in s_date:
         tod_mob += prof
       if curr_ym in s_date:
@@ -479,8 +490,8 @@ if page == "Dashboard":
   tod_rep, m_rep = 0, 0
   if not rep_df.empty:
     for _, r in rep_df.iterrows():
-      prof = float(r["col7"] or 0)
-      c_date = str(r["col9"])
+      prof = float(r["col8"] or 0)
+      c_date = str(r["timestamp"])
       if curr_date in c_date:
         tod_rep += prof
       if curr_ym in c_date:
@@ -490,8 +501,8 @@ if page == "Dashboard":
   tod_acc, m_acc = 0, 0
   if not acc_df.empty:
     for _, r in acc_df.iterrows():
-      prof = float(r["col5"] or 0)
-      s_date = str(r["col6"])
+      prof = float(r["col6"] or 0)
+      s_date = str(r["timestamp"])
       if curr_date in s_date:
         tod_acc += prof
       if curr_ym in s_date:
@@ -502,10 +513,10 @@ if page == "Dashboard":
   tod_shop_exp, m_shop_exp = 0, 0
   if not txn_df.empty:
     for _, r in txn_df.iterrows():
-      ttype = str(r["col1"])
-      prof = float(r["col3"] or 0)
-      amt = float(r["col2"] or 0)
-      e_date = str(r["col5"])
+      ttype = str(r["col2"])
+      prof = float(r["col4"] or 0)
+      amt = float(r["col3"] or 0)
+      e_date = str(r["timestamp"])
       if "EasyPaisa" in ttype or "JazzCash" in ttype:
         if curr_date in e_date:
           tod_ep += prof
@@ -545,9 +556,9 @@ if page == "Dashboard":
     if not txn_df.empty:
       home_expenses = (
           txn_df[
-              (txn_df["col1"] == "HomeExpense")
-              & (txn_df["col5"].str.contains(curr_ym, na=False))
-          ]["col2"]
+              (txn_df["col2"] == "HomeExpense")
+              & (txn_df["timestamp"].str.contains(curr_ym, na=False))
+          ]["col3"]
           .astype(float)
           .sum()
       )
@@ -556,30 +567,30 @@ if page == "Dashboard":
     if not mob_df.empty:
       sold_all = mob_df[mob_df["col7"] == "Sold"]
       for _, r in sold_all.iterrows():
-        mobile_profit += float(r["col11"] or 0) - float(r["col8"] or 0)
+        mobile_profit += float(r["col11"] or 0) - float(r["col9"] or 0)
     repair_profit = (
-        rep_df["col7"].astype(float).sum() if not rep_df.empty else 0
+        rep_df["col8"].astype(float).sum() if not rep_df.empty else 0
     )
-    acc_profit = acc_df["col5"].astype(float).sum() if not acc_df.empty else 0
+    acc_profit = acc_df["col6"].astype(float).sum() if not acc_df.empty else 0
     ep_profit = 0
     if not txn_df.empty:
       ep_profit = (
           txn_df[
-              txn_df["col1"].isin([
+              txn_df["col2"].isin([
                   "EasyPaisaSend",
                   "EasyPaisaReceive",
                   "JazzCashSend",
                   "JazzCashReceive",
               ])
-          ]["col3"]
+          ]["col4"]
           .astype(float)
           .sum()
       )
       shop_expenses = (
-          txn_df[txn_df["col1"] == "ShopExpense"]["col2"].astype(float).sum()
+          txn_df[txn_df["col2"] == "ShopExpense"]["col3"].astype(float).sum()
       )
       home_expenses = (
-          txn_df[txn_df["col1"] == "HomeExpense"]["col2"].astype(float).sum()
+          txn_df[txn_df["col2"] == "HomeExpense"]["col3"].astype(float).sum()
       )
     else:
       shop_expenses, home_expenses = 0, 0
@@ -604,7 +615,7 @@ if page == "Dashboard":
   stock_val = 0
   if not mob_df.empty:
     avail_mobs = mob_df[mob_df["col7"] == "Available"]
-    stock_val = avail_mobs["col8"].astype(float).sum()
+    stock_val = avail_mobs["col9"].astype(float).sum()
   col8.metric("Available Stock Value", f"PKR {stock_val:,.0f}")
 
 # ============================================================
@@ -666,7 +677,7 @@ elif page == "CashDrawer":
                 today_date,
                 str(opening_cash),
                 str(closing_cash),
-                get_formatted_date(),
+                "",
                 "",
                 "",
                 "",
@@ -724,7 +735,7 @@ elif page == "Udhar":
                 str(u_amount),
                 str(u_ret_date),
                 "Pending",
-                get_formatted_date(),
+                "",
                 "",
                 "",
                 "",
@@ -761,12 +772,12 @@ elif page == "Udhar":
       with st.container(border=True):
         col_u1, col_u2, col_u3 = st.columns([2.5, 2, 1.5])
         col_u1.markdown(
-            f"**{u_row['col3']}** ({u_row['col4']})<br>Item: {u_row['col5']}",
+            f"**{u_row['col1']}** ({u_row['col2']})<br>Item: {u_row['col3']}",
             unsafe_allow_html=True,
         )
         col_u2.markdown(
-            f"Amount: **PKR {float(u_row['col6']):,.0f}**<br>Return Date:"
-            f" {u_row['col7']}",
+            f"Amount: **PKR {float(u_row['col4']):,.0f}**<br>Return Date:"
+            f" {u_row['col5']}",
             unsafe_allow_html=True,
         )
         with col_u3:
@@ -841,6 +852,7 @@ elif page == "Mobile Sales":
                   str(p_price),
                   str(s_price),
                   condition,
+                  str(s_price),
                   get_formatted_date(),
               ]],
               columns=COLUMNS,
@@ -959,9 +971,9 @@ elif page == "Accessories":
                 name,
                 category,
                 str(qty),
+                str(p_price),
+                str(s_price),
                 str(item_profit),
-                get_formatted_date(),
-                "",
                 "",
                 "",
                 "",
@@ -989,8 +1001,8 @@ elif page == "Accessories":
     for idx, ac in acc_df.tail(15).iterrows():
       col_a1, col_a2 = st.columns([4, 1])
       col_a1.markdown(
-          f"**{ac['col2']}** ({ac['col3']}) - Qty: {ac['col4']} - Profit:"
-          f" **PKR {float(ac['col5']):,.0f}**"
+          f"**{ac['col1']}** ({ac['col2']}) - Qty: {ac['col3']} - Profit:"
+          f" **PKR {float(ac['col6']):,.0f}**"
       )
       if col_a2.button("Delete ❌", key=f"del_acc_{ac['id']}"):
         st.session_state.df_master = st.session_state.df_master.drop(idx)
@@ -1036,9 +1048,9 @@ elif page == "Repair":
                 r_model,
                 r_fault,
                 str(r_cost),
+                str(r_sale),
                 str(repair_profit),
                 "Delivered",
-                get_formatted_date(),
                 "",
                 "",
                 "",
@@ -1067,8 +1079,8 @@ elif page == "Repair":
       with st.container(border=True):
         colA, colB = st.columns([4, 1])
         colA.markdown(
-            f"**{r['col2']}** - {r['col4']} | Profit: **PKR"
-            f" {float(r['col7']):,.0f}**"
+            f"**{r['col1']}** - {r['col3']} | Profit: **PKR"
+            f" {float(r['col8']):,.0f}**"
         )
         if colB.button("Delete ❌", key=f"del_rep_{r['id']}"):
           st.session_state.df_master = st.session_state.df_master.drop(idx)
@@ -1120,7 +1132,7 @@ elif page == "EasyPaisa":
                 str(trans_amount),
                 str(auto_profit),
                 "Auto Commission",
-                get_formatted_date(),
+                "",
                 "",
                 "",
                 "",
@@ -1172,7 +1184,7 @@ elif page == "Expenses":
                 str(amount),
                 "0",
                 desc,
-                get_formatted_date(),
+                "",
                 "",
                 "",
                 "",
@@ -1202,7 +1214,7 @@ elif page == "History":
             f"**[{r['module']}]**<br><small>{r['timestamp']}</small>",
             unsafe_allow_html=True,
         )
-        c2.markdown(f"Details: {r['col2']} | {r['col3']}")
+        c2.markdown(f"Details: {r['col1']} | {r['col2']}")
         if c3.button("Delete ❌", key=f"del_master_{r['id']}"):
           st.session_state.df_master = st.session_state.df_master.drop(idx)
           save_db(st.session_state.df_master, "Deleted Record")
