@@ -151,6 +151,9 @@ COLUMNS = [
     "col6",
     "col7",
     "col8",
+    "col9",
+    "col10",
+    "col11",
     "timestamp",
 ]
 
@@ -159,8 +162,6 @@ def load_db():
   try:
     contents = repo.get_contents(DB_FILE)
     df = pd.read_csv(io.StringIO(contents.decoded_content.decode("utf-8")))
-    if df.shape[1] != len(COLUMNS):
-      df = pd.DataFrame(columns=COLUMNS)
     return df
   except Exception:
     return pd.DataFrame(columns=COLUMNS)
@@ -216,7 +217,10 @@ def send_whatsapp_link(phone, message):
   )
 
 
-df_master = load_db()
+if "df_master" not in st.session_state:
+  st.session_state.df_master = load_db()
+
+df_master = st.session_state.df_master
 logo_url = get_logo()
 
 # ============================================================
@@ -470,16 +474,17 @@ elif page == "CashDrawer":
     if st.form_submit_button(
         "Save Cash Drawer Record", use_container_width=True
     ):
-      global df_master
       if not drawer_df.empty:
         idx = drawer_df.index[0]
-        df_master.loc[idx, ["col2", "col3", "timestamp"]] = [
-            str(opening_cash),
-            str(closing_cash),
-            get_formatted_date(),
-        ]
+        st.session_state.df_master.loc[
+            idx, ["col2", "col3", "timestamp"]
+        ] = [str(opening_cash), str(closing_cash), get_formatted_date()]
       else:
-        new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+        new_id = (
+            int(st.session_state.df_master["id"].max() + 1)
+            if not st.session_state.df_master.empty
+            else 1
+        )
         new_row = pd.DataFrame(
             [[
                 new_id,
@@ -492,13 +497,18 @@ elif page == "CashDrawer":
                 "",
                 "",
                 "",
+                "",
+                "",
+                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
         )
-        df_master = pd.concat([df_master, new_row], ignore_index=True)
+        st.session_state.df_master = pd.concat(
+            [st.session_state.df_master, new_row], ignore_index=True
+        )
 
-      if save_db(df_master, "Updated Cash Drawer"):
+      if save_db(st.session_state.df_master, "Updated Cash Drawer"):
         st.success("Cash Drawer record saved successfully to GitHub!")
         st.rerun()
 
@@ -525,8 +535,11 @@ elif page == "Udhar":
       if not u_name or not u_phone or not u_item or u_amount <= 0:
         st.error("برائے مہربانی تمام لازمی خانے پر کریں اور رقم درج کریں۔")
       else:
-        global df_master
-        new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+        new_id = (
+            int(st.session_state.df_master["id"].max() + 1)
+            if not st.session_state.df_master.empty
+            else 1
+        )
         new_row = pd.DataFrame(
             [[
                 new_id,
@@ -539,12 +552,17 @@ elif page == "Udhar":
                 "Pending",
                 get_formatted_date(),
                 "",
+                "",
+                "",
+                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
         )
-        df_master = pd.concat([df_master, new_row], ignore_index=True)
-        if save_db(df_master, f"Added Udhar: {u_name}"):
+        st.session_state.df_master = pd.concat(
+            [st.session_state.df_master, new_row], ignore_index=True
+        )
+        if save_db(st.session_state.df_master, f"Added Udhar: {u_name}"):
           st.success("ادھار کامیابی سے محفوظ ہو گیا ہے!")
           whatsapp_msg = (
               f"*ALI MOBILES & COMMUNICATION - UDHAR RECEIPT*\n\n"
@@ -557,10 +575,11 @@ elif page == "Udhar":
   st.markdown("---")
   st.markdown("##### 📌 Pending Udhar Records (بقایا ادھار لسٹ)")
   udhar_df = (
-      df_master[
-          (df_master["module"] == "Udhar") & (df_master["col8"] == "Pending")
+      st.session_state.df_master[
+          (st.session_state.df_master["module"] == "Udhar")
+          & (st.session_state.df_master["col8"] == "Pending")
       ]
-      if not df_master.empty
+      if not st.session_state.df_master.empty
       else pd.DataFrame()
   )
   if not udhar_df.empty:
@@ -578,13 +597,13 @@ elif page == "Udhar":
         )
         with col_u3:
           if st.button("Mark Paid ✅", key=f"paid_udhar_{u_row['id']}"):
-            df_master.loc[idx, "col8"] = "Paid"
-            save_db(df_master, "Marked Udhar Paid")
+            st.session_state.df_master.loc[idx, "col8"] = "Paid"
+            save_db(st.session_state.df_master, "Marked Udhar Paid")
             st.success("ادھار کلیئر ہو گیا!")
             st.rerun()
           if st.button("Delete ❌", key=f"del_udhar_{u_row['id']}"):
-            df_master = df_master.drop(idx)
-            save_db(df_master, "Deleted Udhar")
+            st.session_state.df_master = st.session_state.df_master.drop(idx)
+            save_db(st.session_state.df_master, "Deleted Udhar")
             st.rerun()
   else:
     st.info("کوئی بقایا ادھار موجود نہیں ہے۔")
@@ -595,8 +614,10 @@ elif page == "Udhar":
 elif page == "Mobile Sales":
   st.subheader("📱 Mobile Purchase & Sale Management")
   mob_df = (
-      df_master[df_master["module"] == "Mobile"]
-      if not df_master.empty
+      st.session_state.df_master[
+          st.session_state.df_master["module"] == "Mobile"
+      ]
+      if not st.session_state.df_master.empty
       else pd.DataFrame()
   )
 
@@ -627,8 +648,11 @@ elif page == "Mobile Sales":
         if not c_name or not brand or not model or not imei or p_price <= 0:
           st.error("برائے مہربانی تمام لازمی معلومات درج کریں۔")
         else:
-          global df_master
-          new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+          new_id = (
+              int(st.session_state.df_master["id"].max() + 1)
+              if not st.session_state.df_master.empty
+              else 1
+          )
           new_row = pd.DataFrame(
               [[
                   new_id,
@@ -647,8 +671,12 @@ elif page == "Mobile Sales":
               ]],
               columns=COLUMNS,
           )
-          df_master = pd.concat([df_master, new_row], ignore_index=True)
-          if save_db(df_master, f"Bought Mobile: {brand} {model}"):
+          st.session_state.df_master = pd.concat(
+              [st.session_state.df_master, new_row], ignore_index=True
+          )
+          if save_db(
+              st.session_state.df_master, f"Bought Mobile: {brand} {model}"
+          ):
             st.success("موبائل کامیابی سے اسٹاک میں محفوظ ہو گیا ہے!")
 
   with tab2:
@@ -689,12 +717,13 @@ elif page == "Mobile Sales":
           if not b_name or act_price <= 0:
             st.error("برائے مہربانی خریدار کا نام اور قیمت درج کریں۔")
           else:
-            global df_master
             idx = sel_row.name
-            df_master.loc[idx, "col7"] = "Sold"
-            df_master.loc[idx, "col11"] = str(act_price)
-            df_master.loc[idx, "timestamp"] = get_formatted_date()
-            if save_db(df_master, "Completed Mobile Sale"):
+            st.session_state.df_master.loc[idx, "col7"] = "Sold"
+            st.session_state.df_master.loc[idx, "col11"] = str(act_price)
+            st.session_state.df_master.loc[idx, "timestamp"] = (
+                get_formatted_date()
+            )
+            if save_db(st.session_state.df_master, "Completed Mobile Sale"):
               profit = act_price - float(sel_row["col9"])
               st.success(
                   f"موبائل فروخت ہو گیا! خالص پرافٹ: PKR {profit:,.0f}"
@@ -711,9 +740,8 @@ elif page == "Mobile Sales":
               f" **{r['col7']}**"
           )
           if col_m2.button("Delete ❌", key=f"del_mob_{r['id']}"):
-            global df_master
-            df_master = df_master.drop(idx)
-            save_db(df_master, "Deleted Mobile Entry")
+            st.session_state.df_master = st.session_state.df_master.drop(idx)
+            save_db(st.session_state.df_master, "Deleted Mobile Entry")
             st.rerun()
     else:
       st.info("کوئی ریکارڈ موجود نہیں۔")
@@ -745,8 +773,11 @@ elif page == "Accessories":
         total_cost = p_price * qty
         item_profit = total_sale - total_cost
 
-        global df_master
-        new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+        new_id = (
+            int(st.session_state.df_master["id"].max() + 1)
+            if not st.session_state.df_master.empty
+            else 1
+        )
         new_row = pd.DataFrame(
             [[
                 new_id,
@@ -759,18 +790,25 @@ elif page == "Accessories":
                 "",
                 "",
                 "",
+                "",
+                "",
+                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
         )
-        df_master = pd.concat([df_master, new_row], ignore_index=True)
-        if save_db(df_master, f"Accessory Sold: {name}"):
+        st.session_state.df_master = pd.concat(
+            [st.session_state.df_master, new_row], ignore_index=True
+        )
+        if save_db(st.session_state.df_master, f"Accessory Sold: {name}"):
           st.success(f"فروخت کامیاب! خالص پرافٹ: PKR {item_profit:,.0f}")
 
   st.markdown("---")
   acc_df = (
-      df_master[df_master["module"] == "AccessorySale"]
-      if not df_master.empty
+      st.session_state.df_master[
+          st.session_state.df_master["module"] == "AccessorySale"
+      ]
+      if not st.session_state.df_master.empty
       else pd.DataFrame()
   )
   if not acc_df.empty:
@@ -781,9 +819,8 @@ elif page == "Accessories":
           f" **PKR {float(ac['col5']):,.0f}**"
       )
       if col_a2.button("Delete ❌", key=f"del_acc_{ac['id']}"):
-        global df_master
-        df_master = df_master.drop(idx)
-        save_db(df_master, "Deleted Accessory Sale")
+        st.session_state.df_master = st.session_state.df_master.drop(idx)
+        save_db(st.session_state.df_master, "Deleted Accessory Sale")
         st.rerun()
 
 # ============================================================
@@ -811,8 +848,11 @@ elif page == "Repair":
         st.error("برائے مہربانی نام اور درست قیمت درج کریں۔")
       else:
         repair_profit = r_sale - r_cost
-        global df_master
-        new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+        new_id = (
+            int(st.session_state.df_master["id"].max() + 1)
+            if not st.session_state.df_master.empty
+            else 1
+        )
         new_row = pd.DataFrame(
             [[
                 new_id,
@@ -825,20 +865,27 @@ elif page == "Repair":
                 str(repair_profit),
                 "Delivered",
                 get_formatted_date(),
+                "",
+                "",
+                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
         )
-        df_master = pd.concat([df_master, new_row], ignore_index=True)
-        if save_db(df_master, f"Repair Done: {r_model}"):
+        st.session_state.df_master = pd.concat(
+            [st.session_state.df_master, new_row], ignore_index=True
+        )
+        if save_db(st.session_state.df_master, f"Repair Done: {r_model}"):
           st.success(
               f"ریپیئرنگ محفوظ ہو گئی! خالص پرافٹ: PKR {repair_profit:,.0f}"
           )
 
   st.markdown("---")
   rep_df = (
-      df_master[df_master["module"] == "Repair"]
-      if not df_master.empty
+      st.session_state.df_master[
+          st.session_state.df_master["module"] == "Repair"
+      ]
+      if not st.session_state.df_master.empty
       else pd.DataFrame()
   )
   if not rep_df.empty:
@@ -850,9 +897,8 @@ elif page == "Repair":
             f" {float(r['col7']):,.0f}**"
         )
         if colB.button("Delete ❌", key=f"del_rep_{r['id']}"):
-          global df_master
-          df_master = df_master.drop(idx)
-          save_db(df_master, "Deleted Repair")
+          st.session_state.df_master = st.session_state.df_master.drop(idx)
+          save_db(st.session_state.df_master, "Deleted Repair")
           st.rerun()
 
 # ============================================================
@@ -887,8 +933,11 @@ elif page == "EasyPaisa":
       if trans_amount <= 0:
         st.error("رقم درج کریں۔")
       else:
-        global df_master
-        new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+        new_id = (
+            int(st.session_state.df_master["id"].max() + 1)
+            if not st.session_state.df_master.empty
+            else 1
+        )
         new_row = pd.DataFrame(
             [[
                 new_id,
@@ -901,12 +950,17 @@ elif page == "EasyPaisa":
                 "",
                 "",
                 "",
+                "",
+                "",
+                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
         )
-        df_master = pd.concat([df_master, new_row], ignore_index=True)
-        if save_db(df_master, f"EP/JC Transaction"):
+        st.session_state.df_master = pd.concat(
+            [st.session_state.df_master, new_row], ignore_index=True
+        )
+        if save_db(st.session_state.df_master, f"EP/JC Transaction"):
           st.success("سندی محفوظ ہو گئی!")
 
 # ============================================================
@@ -931,8 +985,11 @@ elif page == "Expenses":
       if amount <= 0 or not desc:
         st.error("رقم اور تفصیل لازمی ہے۔")
       else:
-        global df_master
-        new_id = int(df_master["id"].max() + 1) if not df_master.empty else 1
+        new_id = (
+            int(st.session_state.df_master["id"].max() + 1)
+            if not st.session_state.df_master.empty
+            else 1
+        )
         new_row = pd.DataFrame(
             [[
                 new_id,
@@ -945,12 +1002,17 @@ elif page == "Expenses":
                 "",
                 "",
                 "",
+                "",
+                "",
+                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
         )
-        df_master = pd.concat([df_master, new_row], ignore_index=True)
-        if save_db(df_master, f"Expense Saved"):
+        st.session_state.df_master = pd.concat(
+            [st.session_state.df_master, new_row], ignore_index=True
+        )
+        if save_db(st.session_state.df_master, f"Expense Saved"):
           st.success("خرچہ محفوظ ہو گیا!")
 
 # ============================================================
@@ -958,8 +1020,8 @@ elif page == "Expenses":
 # ============================================================
 elif page == "History":
   st.subheader("📜 Unified Activity History & Ledger")
-  if not df_master.empty:
-    for idx, r in df_master.tail(30).iloc[::-1].iterrows():
+  if not st.session_state.df_master.empty:
+    for idx, r in st.session_state.df_master.tail(30).iloc[::-1].iterrows():
       with st.container(border=True):
         c1, c2, c3 = st.columns([2, 3, 1])
         c1.markdown(
@@ -968,9 +1030,8 @@ elif page == "History":
         )
         c2.markdown(f"Details: {r['col2']} | {r['col3']}")
         if c3.button("Delete ❌", key=f"del_master_{r['id']}"):
-          global df_master
-          df_master = df_master.drop(idx)
-          save_db(df_master, "Deleted Record")
+          st.session_state.df_master = st.session_state.df_master.drop(idx)
+          save_db(st.session_state.df_master, "Deleted Record")
           st.rerun()
   else:
     st.info("کوئی ریکارڈ موجود نہیں۔")
@@ -980,19 +1041,19 @@ elif page == "History":
 # ============================================================
 elif page == "Reports":
   st.subheader("📈 Detailed Reports")
-  if not df_master.empty:
-    st.dataframe(df_master, use_container_width=True)
+  if not st.session_state.df_master.empty:
+    st.dataframe(st.session_state.df_master, use_container_width=True)
   else:
     st.info("کوئی ڈیٹا موجود نہیں۔")
 
 elif page == "Inventory":
   st.subheader("📦 Available Mobile Stock")
   mob_df = (
-      df_master[
-          (df_master["module"] == "Mobile")
-          & (df_master["col7"] == "Available")
+      st.session_state.df_master[
+          (st.session_state.df_master["module"] == "Mobile")
+          & (st.session_state.df_master["col7"] == "Available")
       ]
-      if not df_master.empty
+      if not st.session_state.df_master.empty
       else pd.DataFrame()
   )
   if not mob_df.empty:
