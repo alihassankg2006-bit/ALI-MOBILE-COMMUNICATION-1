@@ -833,7 +833,12 @@ elif page == "Mobile Sales":
 
       c7, c8, c9 = st.columns(3)
       condition = c7.selectbox("Condition", ["Used", "New"])
-      p_price = c8.number_input("Purchase Price (خرید قیمت) *", min_value=0.0, step=100.0)
+      p_price = c8.number_input(
+          "Purchase Price (خرید قیمت) *", min_value=0.0, step=100.0
+      )
+      s_price_target = c9.number_input(
+          "Target Selling Price (اکسیپٹ ٹو پرائز) *", min_value=0.0, step=100.0
+      )
 
       if st.form_submit_button("Save to Stock", use_container_width=True):
         if not brand or not model or p_price <= 0:
@@ -854,11 +859,11 @@ elif page == "Mobile Sales":
                   brand,
                   model,
                   "Available",
-                  "N/A",
-                  "N/A",
+                  imei,
+                  "",
                   condition,
                   str(p_price),
-                  str(p_price),
+                  str(s_price_target),
                   get_formatted_date(),
               ]],
               columns=COLUMNS,
@@ -895,7 +900,7 @@ elif page == "Mobile Sales":
       sel_row = avail_mobs[avail_mobs["id"] == selected_id].iloc[0]
 
       raw_cost = sel_row["col10"]
-      if pd.notna(raw_cost) and str(raw_cost).replace('.', '', 1).isdigit():
+      if pd.notna(raw_cost) and str(raw_cost).replace(".", "", 1).isdigit():
         display_cost = float(raw_cost)
       else:
         display_cost = 0.0
@@ -951,13 +956,68 @@ elif page == "Mobile Sales":
           m_name = r["col6"] if pd.notna(r["col6"]) else ""
           status = r["col7"] if pd.notna(r["col7"]) else ""
           col_m1.markdown(
-              f"**{b_name} {m_name}** | Status:"
-              f" **{status}**"
+              f"**{b_name} {m_name}** | Status: **{status}**"
           )
-          if col_m2.button("Delete ❌", key=f"del_mob_{r['id']}"):
-            st.session_state.df_master = st.session_state.df_master.drop(idx)
-            save_db(st.session_state.df_master, "Deleted Mobile Entry")
-            st.rerun()
+
+          with col_m2:
+            edit_clicked = st.button("Edit ✏️", key=f"edit_mob_{r['id']}")
+            del_clicked = st.button("Delete ❌", key=f"del_mob_{r['id']}")
+
+            if del_clicked:
+              st.session_state.df_master = st.session_state.df_master.drop(idx)
+              save_db(st.session_state.df_master, "Deleted Mobile Entry")
+              st.rerun()
+
+        if f"edit_mode_{r['id']}" not in st.session_state:
+          st.session_state[f"edit_mode_{r['id']}"] = False
+
+        if edit_clicked:
+          st.session_state[f"edit_mode_{r['id']}"] = not st.session_state[
+              f"edit_mode_{r['id']}"
+          ]
+          st.rerun()
+
+        if st.session_state.get(f"edit_mode_{r['id']}", False):
+          with st.form(key=f"edit_mob_form_{r['id']}"):
+            st.markdown(f"#### Edit Mobile ID: {r['id']}")
+            e_owner = st.text_input("Owner Name", value=str(r["col1"] or ""))
+            e_phone = st.text_input("Mobile Number", value=str(r["col2"] or ""))
+            e_brand = st.text_input("Brand", value=str(r["col5"] or ""))
+            e_model = st.text_input(
+                "Color/Variant", value=str(r["col6"] or "")
+            )
+            e_status = st.selectbox(
+                "Status",
+                ["Available", "Sold"],
+                index=0 if r["col7"] == "Available" else 1,
+            )
+            e_cp = st.number_input(
+                "Purchase Price",
+                value=float(r["col10"])
+                if pd.notna(r["col10"])
+                and str(r["col10"]).replace(".", "", 1).isdigit()
+                else 0.0,
+            )
+            e_sp = st.number_input(
+                "Accept/Sell Price",
+                value=float(r["col11"])
+                if pd.notna(r["col11"])
+                and str(r["col11"]).replace(".", "", 1).isdigit()
+                else 0.0,
+            )
+
+            if st.form_submit_button("Update Changes"):
+              st.session_state.df_master.loc[idx, "col1"] = e_owner
+              st.session_state.df_master.loc[idx, "col2"] = e_phone
+              st.session_state.df_master.loc[idx, "col5"] = e_brand
+              st.session_state.df_master.loc[idx, "col6"] = e_model
+              st.session_state.df_master.loc[idx, "col7"] = e_status
+              st.session_state.df_master.loc[idx, "col10"] = str(e_cp)
+              st.session_state.df_master.loc[idx, "col11"] = str(e_sp)
+              save_db(st.session_state.df_master, "Updated Mobile Entry")
+              st.session_state[f"edit_mode_{r['id']}"] = False
+              st.success("موبائل کا ریکارڈ اپڈیٹ ہو گیا ہے!")
+              st.rerun()
     else:
       st.info("کوئی ریکارڈ موجود نہیں۔")
 
@@ -1133,7 +1193,9 @@ elif page == "EasyPaisa":
         ],
         format_func=lambda x: x[1],
     )[0]
-    trans_amount = c2.number_input("Transaction Amount", min_value=0.0, step=500.0)
+    trans_amount = c2.number_input(
+        "Transaction Amount", min_value=0.0, step=500.0
+    )
 
     auto_profit = (
         (trans_amount / 1000.0) * 10
@@ -1231,33 +1293,81 @@ elif page == "Expenses":
           st.success("خرچہ محفوظ ہو گیا!")
 
 # ============================================================
-# UNIFIED ACTIVITY HISTORY
+# UNIFIED ACTIVITY HISTORY (WITH EDIT & DELETE)
 # ============================================================
 elif page == "History":
   st.subheader("📜 Unified Activity History & Ledger")
   if not st.session_state.df_master.empty:
     for idx, r in st.session_state.df_master.tail(30).iloc[::-1].iterrows():
       with st.container(border=True):
-        c1, c2, c3 = st.columns([2, 3, 1])
+        c1, c2, c3, c4 = st.columns([2, 3, 1, 1])
         c1.markdown(
             f"**[{r['module']}]**<br><small>{r['timestamp']}</small>",
             unsafe_allow_html=True,
         )
         c2.markdown(f"Details: {r['col1']} | {r['col2']}")
-        if c3.button("Delete ❌", key=f"del_master_{r['id']}"):
-          st.session_state.df_master = st.session_state.df_master.drop(idx)
-          save_db(st.session_state.df_master, "Deleted Record")
+
+        with c3:
+          edit_hist = st.button("Edit ✏️", key=f"edit_hist_{r['id']}")
+        with c4:
+          del_hist = st.button("Delete ❌", key=f"del_master_{r['id']}")
+
+          if del_hist:
+            st.session_state.df_master = st.session_state.df_master.drop(idx)
+            save_db(st.session_state.df_master, "Deleted Record")
+            st.rerun()
+
+        if f"edit_hist_mode_{r['id']}" not in st.session_state:
+          st.session_state[f"edit_hist_mode_{r['id']}"] = False
+
+        if edit_hist:
+          st.session_state[f"edit_hist_mode_{r['id']}"] = not st.session_state[
+              f"edit_hist_mode_{r['id']}"
+          ]
           st.rerun()
+
+        if st.session_state.get(f"edit_hist_mode_{r['id']}", False):
+          with st.form(key=f"edit_hist_form_{r['id']}"):
+            st.markdown(f"#### Edit Record ID: {r['id']}")
+            h_col1 = st.text_input("Detail 1 (col1)", value=str(r["col1"] or ""))
+            h_col2 = st.text_input("Detail 2 (col2)", value=str(r["col2"] or ""))
+            h_col3 = st.text_input("Detail 3 (col3)", value=str(r["col3"] or ""))
+
+            if st.form_submit_button("Update History"):
+              st.session_state.df_master.loc[idx, "col1"] = h_col1
+              st.session_state.df_master.loc[idx, "col2"] = h_col2
+              st.session_state.df_master.loc[idx, "col3"] = h_col3
+              save_db(st.session_state.df_master, "Updated History Record")
+              st.session_state[f"edit_hist_mode_{r['id']}"] = False
+              st.success("ریکارڈ کامیابی سے اپڈیٹ ہو گیا!")
+              st.rerun()
   else:
     st.info("کوئی ریکارڈ موجود نہیں۔")
 
 # ============================================================
-# REPORTS & INVENTORY
+# REPORTS & INVENTORY (RENAMED COLUMNS FOR CLARITY)
 # ============================================================
 elif page == "Reports":
   st.subheader("📈 Detailed Reports")
   if not st.session_state.df_master.empty:
-    st.dataframe(st.session_state.df_master, use_container_width=True)
+    display_df = st.session_state.df_master.copy()
+    display_df.columns = [
+        "ID",
+        "Module",
+        "Owner Name",
+        "Number",
+        "CNIC",
+        "Mobile Model",
+        "Variant/Details",
+        "Status",
+        "IMEI",
+        "Column 9",
+        "Condition",
+        "قیمت خرید (Purchase Price)",
+        "Accept Price (سیل پرائز)",
+        "Timestamp",
+    ]
+    st.dataframe(display_df, use_container_width=True)
   else:
     st.info("کوئی ڈیٹا موجود نہیں۔")
 
@@ -1272,7 +1382,24 @@ elif page == "Inventory":
       else pd.DataFrame()
   )
   if not mob_df.empty:
-    st.dataframe(mob_df, use_container_width=True)
+    inv_display = mob_df.copy()
+    inv_display.columns = [
+        "ID",
+        "Module",
+        "Owner Name",
+        "Number",
+        "CNIC",
+        "Mobile Model",
+        "Variant/Details",
+        "Status",
+        "IMEI",
+        "Column 9",
+        "Condition",
+        "قیمت خرید (Purchase Price)",
+        "Accept Price (سیل پرائز)",
+        "Timestamp",
+    ]
+    st.dataframe(inv_display, use_container_width=True)
   else:
     st.info("اسٹاک خالی ہے۔")
 
