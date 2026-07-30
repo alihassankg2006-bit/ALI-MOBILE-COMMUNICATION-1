@@ -822,22 +822,22 @@ elif page == "Mobile Sales":
   with tab1:
     with st.form("purchase_mob_form", clear_on_submit=True):
       c1, c2, c3 = st.columns(3)
-      c_name = c1.text_input("Customer / Seller Name (مالک کا نام) *")
-      c_phone = c2.text_input("Mobile Number *")
-      c_cnic = c3.text_input("Seller CNIC (آئی ڈی کارڈ نمبر) *")
+      c_name = c1.text_input("Customer / Seller Name (مالک کا نام)")
+      c_phone = c2.text_input("Mobile Number")
+      c_cnic = c3.text_input("Seller CNIC (آئی ڈی کارڈ نمبر)")
 
       c4, c5, c6 = st.columns(3)
       brand = c4.text_input("Brand *")
       model = c5.text_input("Color / Variant (کلر / ویریئنٹ) *")
-      imei = c6.text_input("IMEI Number *")
+      imei = c6.text_input("IMEI Number")
 
       c7, c8, c9 = st.columns(3)
       condition = c7.selectbox("Condition", ["Used", "New"])
       p_price = c8.number_input("Purchase Price (خرید قیمت) *", min_value=0.0, step=100.0)
 
       if st.form_submit_button("Save to Stock", use_container_width=True):
-        if not c_name or not brand or not model or p_price <= 0:
-          st.error("برائے مہربانی تمام لازمی معلومات درج کریں۔")
+        if not brand or not model or p_price <= 0:
+          st.error("برائے مہربانی برانڈ، ماڈل اور قیمت درج کریں۔")
         else:
           new_id = (
               int(st.session_state.df_master["id"].max() + 1)
