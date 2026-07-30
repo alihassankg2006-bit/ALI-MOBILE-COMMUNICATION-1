@@ -139,20 +139,21 @@ def get_logo():
 
 
 DB_FILE = "ali_mobiles_master_data.csv"
+
+# بالکل درست 12 کالمز کی ترتیب (Column 9 کو ہمیشہ کے لیے ختم کر دیا گیا ہے)
 COLUMNS = [
     "id",
     "module",
-    "col1",
-    "col2",
-    "col3",
-    "col4",
-    "col5",
-    "col6",
-    "col7",
-    "col8",
-    "col9",
-    "col10",
-    "col11",
+    "col1",  # Owner / Seller Name
+    "col2",  # Phone Number
+    "col3",  # CNIC
+    "col4",  # Brand
+    "col5",  # Color / Variant / Model
+    "col6",  # Status (Available / Sold)
+    "col7",  # IMEI Number
+    "col8",  # Condition (Used / New)
+    "col9",  # Purchase Price (قیمتِ خرید)
+    "col10",  # Accept / Target Sell Price
     "timestamp",
 ]
 
@@ -166,7 +167,6 @@ INITIAL_MOBILES = [
         "Google Pixel 7 Pro",
         "بلیک، 12GB/128GB",
         "Available",
-        "N/A",
         "N/A",
         "Used",
         "48000",
@@ -183,7 +183,6 @@ INITIAL_MOBILES = [
         "وائٹ، Non-PTA",
         "Available",
         "N/A",
-        "N/A",
         "Used",
         "42000",
         "48000",
@@ -198,7 +197,6 @@ INITIAL_MOBILES = [
         "iPhone 8 Plus",
         "گولڈ، 256GB",
         "Available",
-        "N/A",
         "N/A",
         "Used",
         "20000",
@@ -215,7 +213,6 @@ INITIAL_MOBILES = [
         "گولڈ، 64GB",
         "Available",
         "N/A",
-        "N/A",
         "Used",
         "7000",
         "10000",
@@ -230,7 +227,6 @@ INITIAL_MOBILES = [
         "iPhone XR",
         "Converted to iPhone 17",
         "Available",
-        "N/A",
         "N/A",
         "Used",
         "25000",
@@ -247,7 +243,6 @@ INITIAL_MOBILES = [
         "—",
         "Available",
         "N/A",
-        "N/A",
         "Used",
         "13500",
         "16000",
@@ -262,7 +257,6 @@ INITIAL_MOBILES = [
         "iPhone XR",
         "بلیک، 256GB",
         "Available",
-        "N/A",
         "N/A",
         "Used",
         "22000",
@@ -279,7 +273,6 @@ INITIAL_MOBILES = [
         "صاف کنڈیشن",
         "Available",
         "N/A",
-        "N/A",
         "Used",
         "10000",
         "13000",
@@ -294,7 +287,6 @@ INITIAL_MOBILES = [
         "Tecno Spark Go",
         "2024",
         "Available",
-        "N/A",
         "N/A",
         "New",
         "13500",
@@ -311,7 +303,6 @@ INITIAL_MOBILES = [
         "—",
         "Available",
         "N/A",
-        "N/A",
         "Used",
         "13500",
         "16000",
@@ -326,7 +317,6 @@ INITIAL_MOBILES = [
         "Vivo V12",
         "—",
         "Available",
-        "N/A",
         "N/A",
         "Used",
         "5000",
@@ -479,11 +469,11 @@ if page == "Dashboard":
   mob_df = get_module_df("Mobile")
   tod_mob, m_mob = 0, 0
   if not mob_df.empty:
-    sold_mob = mob_df[mob_df["col7"] == "Sold"]
+    sold_mob = mob_df[mob_df["col6"] == "Sold"]
     for _, r in sold_mob.iterrows():
       try:
-        prof = float(str(r["col11"]).replace(",", "") or 0) - float(
-            str(r["col10"]).replace(",", "") or 0
+        prof = float(str(r["col10"]).replace(",", "") or 0) - float(
+            str(r["col9"]).replace(",", "") or 0
         )
       except:
         prof = 0
@@ -512,7 +502,7 @@ if page == "Dashboard":
   if not acc_df.empty:
     for _, r in acc_df.iterrows():
       try:
-        prof = float(str(r["col6"]).replace(",", "") or 0)
+        prof = float(str(r["col7"]).replace(",", "") or 0)
       except:
         prof = 0
       s_date = str(r["timestamp"])
@@ -579,11 +569,11 @@ if page == "Dashboard":
   else:
     mobile_profit = 0
     if not mob_df.empty:
-      sold_all = mob_df[mob_df["col7"] == "Sold"]
+      sold_all = mob_df[mob_df["col6"] == "Sold"]
       for _, r in sold_all.iterrows():
         try:
-          mobile_profit += float(str(r["col11"]).replace(",", "") or 0) - float(
-              str(r["col10"]).replace(",", "") or 0
+          mobile_profit += float(str(r["col10"]).replace(",", "") or 0) - float(
+              str(r["col9"]).replace(",", "") or 0
           )
         except:
           pass
@@ -600,7 +590,7 @@ if page == "Dashboard":
     if not acc_df.empty:
       for _, r in acc_df.iterrows():
         try:
-          acc_profit += float(str(r["col6"]).replace(",", "") or 0)
+          acc_profit += float(str(r["col7"]).replace(",", "") or 0)
         except:
           pass
 
@@ -645,13 +635,13 @@ if page == "Dashboard":
   col6.metric("Shop Expenses", f"PKR {shop_expenses:,.0f}")
   col7.metric("Home Expenses", f"PKR {home_expenses:,.0f}")
 
-  # Available Stock Value Calculation (Strictly Purchase Price col10)
+  # Available Stock Value Calculation (Strictly Purchase Price col9)
   stock_val = 0
   if not mob_df.empty:
-    avail_mobs = mob_df[mob_df["col7"] == "Available"]
+    avail_mobs = mob_df[mob_df["col6"] == "Available"]
     for _, r in avail_mobs.iterrows():
       try:
-        val = float(str(r["col10"]).replace(",", "") or 0)
+        val = float(str(r["col9"]).replace(",", "") or 0)
         stock_val += val
       except:
         pass
@@ -728,7 +718,6 @@ elif page == "CashDrawer":
                 "",
                 "",
                 "",
-                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
@@ -779,7 +768,6 @@ elif page == "Udhar":
                 str(u_amount),
                 str(u_ret_date),
                 "Pending",
-                "",
                 "",
                 "",
                 "",
@@ -889,11 +877,7 @@ elif page == "Mobile Sales":
               if not st.session_state.df_master.empty
               else 1
           )
-          # Correct Columns mapping:
-          # col7 = Status ('Available')
-          # col9 = Condition ('Used' / 'New')
-          # col10 = Purchase Price
-          # col11 = Accept/Target Sell Price
+          # درست کالم میپنگ (Column 9 = Purchase Price, Column 10 = Target Price)
           new_row = pd.DataFrame(
               [[
                   str(new_id),
@@ -905,7 +889,6 @@ elif page == "Mobile Sales":
                   model,
                   "Available",
                   imei,
-                  "",
                   condition,
                   str(p_price),
                   str(s_price_target),
@@ -923,7 +906,7 @@ elif page == "Mobile Sales":
 
   with tab2:
     if not mob_df.empty:
-      avail_mobs = mob_df[mob_df["col7"] == "Available"]
+      avail_mobs = mob_df[mob_df["col6"] == "Available"]
     else:
       avail_mobs = pd.DataFrame()
 
@@ -932,9 +915,9 @@ elif page == "Mobile Sales":
     else:
       mob_options = {}
       for idx, row in avail_mobs.iterrows():
-        b_name = row["col5"] if pd.notna(row["col5"]) else ""
-        m_name = row["col6"] if pd.notna(row["col6"]) else ""
-        cost_val = row["col10"] if pd.notna(row["col10"]) else "0"
+        b_name = row["col4"] if pd.notna(row["col4"]) else ""
+        m_name = row["col5"] if pd.notna(row["col5"]) else ""
+        cost_val = row["col9"] if pd.notna(row["col9"]) else "0"
         label = (
             f"{b_name} ({m_name}) — قیمتِ خرید: PKR {cost_val} [RowID: {idx}]"
         )
@@ -946,7 +929,7 @@ elif page == "Mobile Sales":
       selected_idx = mob_options[selected_choice]
       sel_row = st.session_state.df_master.loc[selected_idx]
 
-      raw_cost = sel_row["col10"]
+      raw_cost = sel_row["col9"]
       try:
         display_cost = float(str(raw_cost).replace(",", "") or 0)
       except:
@@ -958,7 +941,7 @@ elif page == "Mobile Sales":
       d_col1.markdown(f"**مالک کا نام:** {sel_row['col1']}")
       d_col1.markdown(f"**موبائل نمبر:** {sel_row['col2']}")
       d_col2.markdown(f"**آئی ڈی کارڈ نمبر:** {sel_row['col3']}")
-      d_col2.markdown(f"**IMEI نمبر:** {sel_row['col4']}")
+      d_col2.markdown(f"**IMEI نمبر:** {sel_row['col7']}")
       d_col3.markdown(f"**قیمتِ خرید:** PKR {display_cost:,.0f}")
       d_col3.markdown(f"**خرید کی تاریخ:** {sel_row['timestamp']}")
       st.markdown("---")
@@ -981,8 +964,8 @@ elif page == "Mobile Sales":
           if not b_name or act_price <= 0:
             st.error("برائے مہربانی خریدار کا نام اور قیمت درج کریں۔")
           else:
-            st.session_state.df_master.loc[selected_idx, "col7"] = "Sold"
-            st.session_state.df_master.loc[selected_idx, "col11"] = str(
+            st.session_state.df_master.loc[selected_idx, "col6"] = "Sold"
+            st.session_state.df_master.loc[selected_idx, "col10"] = str(
                 act_price
             )
             st.session_state.df_master.loc[selected_idx, "timestamp"] = (
@@ -1000,9 +983,9 @@ elif page == "Mobile Sales":
       for idx, r in mob_df.iterrows():
         with st.container(border=True):
           col_m1, col_m2 = st.columns([4, 1])
-          b_name = r["col5"] if pd.notna(r["col5"]) else ""
-          m_name = r["col6"] if pd.notna(r["col6"]) else ""
-          status = r["col7"] if pd.notna(r["col7"]) else ""
+          b_name = r["col4"] if pd.notna(r["col4"]) else ""
+          m_name = r["col5"] if pd.notna(r["col5"]) else ""
+          status = r["col6"] if pd.notna(r["col6"]) else ""
           col_m1.markdown(
               f"**{b_name} {m_name}** | Status: **{status}** (ID: {idx})"
           )
@@ -1030,27 +1013,27 @@ elif page == "Mobile Sales":
             st.markdown(f"#### Edit Mobile Index: {idx}")
             e_owner = st.text_input("Owner Name", value=str(r["col1"] or ""))
             e_phone = st.text_input("Mobile Number", value=str(r["col2"] or ""))
-            e_brand = st.text_input("Brand", value=str(r["col5"] or ""))
+            e_brand = st.text_input("Brand", value=str(r["col4"] or ""))
             e_model = st.text_input(
-                "Color/Variant", value=str(r["col6"] or "")
+                "Color/Variant", value=str(r["col5"] or "")
             )
             e_status = st.selectbox(
                 "Status",
                 ["Available", "Sold"],
-                index=0 if r["col7"] == "Available" else 1,
+                index=0 if r["col6"] == "Available" else 1,
             )
             e_condition = st.selectbox(
                 "Condition",
                 ["Used", "New"],
-                index=0 if str(r["col9"]) == "Used" else 1,
+                index=0 if str(r["col8"]) == "Used" else 1,
             )
 
             try:
-              cp_val = float(str(r["col10"]).replace(",", "") or 0)
+              cp_val = float(str(r["col9"]).replace(",", "") or 0)
             except:
               cp_val = 0.0
             try:
-              sp_val = float(str(r["col11"]).replace(",", "") or 0)
+              sp_val = float(str(r["col10"]).replace(",", "") or 0)
             except:
               sp_val = 0.0
 
@@ -1062,12 +1045,12 @@ elif page == "Mobile Sales":
             if st.form_submit_button("Update Changes"):
               st.session_state.df_master.loc[idx, "col1"] = str(e_owner)
               st.session_state.df_master.loc[idx, "col2"] = str(e_phone)
-              st.session_state.df_master.loc[idx, "col5"] = str(e_brand)
-              st.session_state.df_master.loc[idx, "col6"] = str(e_model)
-              st.session_state.df_master.loc[idx, "col7"] = str(e_status)
-              st.session_state.df_master.loc[idx, "col9"] = str(e_condition)
-              st.session_state.df_master.loc[idx, "col10"] = str(e_cp)
-              st.session_state.df_master.loc[idx, "col11"] = str(e_sp)
+              st.session_state.df_master.loc[idx, "col4"] = str(e_brand)
+              st.session_state.df_master.loc[idx, "col5"] = str(e_model)
+              st.session_state.df_master.loc[idx, "col6"] = str(e_status)
+              st.session_state.df_master.loc[idx, "col8"] = str(e_condition)
+              st.session_state.df_master.loc[idx, "col9"] = str(e_cp)
+              st.session_state.df_master.loc[idx, "col10"] = str(e_sp)
               save_db(st.session_state.df_master, "Updated Mobile Entry")
               st.session_state[f"edit_mode_{idx}"] = False
               st.success("موبائل کا ریکارڈ بالکل درست اپڈیٹ ہو گیا ہے!")
@@ -1121,7 +1104,6 @@ elif page == "Accessories":
                 "",
                 "",
                 "",
-                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
@@ -1144,7 +1126,7 @@ elif page == "Accessories":
     for idx, ac in acc_df.tail(15).iterrows():
       col_a1, col_a2 = st.columns([4, 1])
       try:
-        p_val = float(str(ac["col6"]).replace(",", "") or 0)
+        p_val = float(str(ac["col7"]).replace(",", "") or 0)
       except:
         p_val = 0.0
       col_a1.markdown(
@@ -1200,7 +1182,6 @@ elif page == "Repair":
                 "Delivered",
                 "",
                 "",
-                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
@@ -1226,7 +1207,7 @@ elif page == "Repair":
       with st.container(border=True):
         colA, colB = st.columns([4, 1])
         try:
-          rp_val = float(str(r["col8"]).replace(",", "") or 0)
+          rp_val = float(str(r["col9"]).replace(",", "") or 0)
         except:
           rp_val = 0.0
         colA.markdown(
@@ -1290,7 +1271,6 @@ elif page == "EasyPaisa":
                 "",
                 "",
                 "",
-                "",
                 get_formatted_date(),
             ]],
             columns=COLUMNS,
@@ -1336,7 +1316,6 @@ elif page == "Expenses":
                 str(amount),
                 "0",
                 desc,
-                "",
                 "",
                 "",
                 "",
@@ -1418,11 +1397,10 @@ elif page == "Reports":
         "Owner Name",
         "Number",
         "CNIC",
-        "Mobile Model",
+        "Brand",
         "Variant/Details",
         "Status",
         "IMEI",
-        "Column 9",
         "Condition (حالت)",
         "قیمت خرید (Purchase Price)",
         "Accept Price (متوقع سیل پرائز)",
@@ -1437,7 +1415,7 @@ elif page == "Inventory":
   mob_df = (
       st.session_state.df_master[
           (st.session_state.df_master["module"] == "Mobile")
-          & (st.session_state.df_master["col7"] == "Available")
+          & (st.session_state.df_master["col6"] == "Available")
       ]
       if not st.session_state.df_master.empty
       else pd.DataFrame()
@@ -1450,11 +1428,10 @@ elif page == "Inventory":
         "Owner Name",
         "Number",
         "CNIC",
-        "Mobile Model",
+        "Brand",
         "Variant/Details",
         "Status",
         "IMEI",
-        "Column 9",
         "Condition (حالت)",
         "قیمت خرید (Purchase Price)",
         "Accept Price (متوقع سیل پرائز)",
