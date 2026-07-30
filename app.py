@@ -138,7 +138,6 @@ def get_logo():
   return None
 
 
-# Master Data Schema for GitHub CSV Storage (Total 14 Columns)
 DB_FILE = "ali_mobiles_master_data.csv"
 COLUMNS = [
     "id",
@@ -344,9 +343,14 @@ def load_db():
     if df.empty or len(df.columns) != len(COLUMNS):
       df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
       save_db(df, "Initialized with default mobiles")
+    # Ensure all columns are string type to avoid edit type mismatch bugs
+    for col in df.columns:
+      df[col] = df[col].astype(str)
     return df
   except Exception:
     df = pd.DataFrame(INITIAL_MOBILES, columns=COLUMNS)
+    for col in df.columns:
+      df[col] = df[col].astype(str)
     save_db(df, "Initial POS Data with default mobiles")
     return df
 
@@ -478,7 +482,12 @@ if page == "Dashboard":
   if not mob_df.empty:
     sold_mob = mob_df[mob_df["col7"] == "Sold"]
     for _, r in sold_mob.iterrows():
-      prof = float(r["col11"] or 0) - float(r["col10"] or 0)
+      try:
+        prof = float(str(r["col11"]).replace(",", "") or 0) - float(
+            str(r["col10"]).replace(",", "") or 0
+        )
+      except:
+        prof = 0
       s_date = str(r["timestamp"])
       if curr_date in s_date:
         tod_mob += prof
@@ -489,7 +498,10 @@ if page == "Dashboard":
   tod_rep, m_rep = 0, 0
   if not rep_df.empty:
     for _, r in rep_df.iterrows():
-      prof = float(r["col8"] or 0)
+      try:
+        prof = float(str(r["col8"]).replace(",", "") or 0)
+      except:
+        prof = 0
       c_date = str(r["timestamp"])
       if curr_date in c_date:
         tod_rep += prof
@@ -500,7 +512,10 @@ if page == "Dashboard":
   tod_acc, m_acc = 0, 0
   if not acc_df.empty:
     for _, r in acc_df.iterrows():
-      prof = float(r["col6"] or 0)
+      try:
+        prof = float(str(r["col6"]).replace(",", "") or 0)
+      except:
+        prof = 0
       s_date = str(r["timestamp"])
       if curr_date in s_date:
         tod_acc += prof
@@ -513,8 +528,11 @@ if page == "Dashboard":
   if not txn_df.empty:
     for _, r in txn_df.iterrows():
       ttype = str(r["col2"])
-      prof = float(r["col4"] or 0)
-      amt = float(r["col3"] or 0)
+      try:
+        prof = float(str(r["col4"]).replace(",", "") or 0)
+        amt = float(str(r["col3"]).replace(",", "") or 0)
+      except:
+        prof, amt = 0, 0
       e_date = str(r["timestamp"])
       if "EasyPaisa" in ttype or "JazzCash" in ttype:
         if curr_date in e_date:
@@ -553,46 +571,63 @@ if page == "Dashboard":
     shop_expenses = m_shop_exp
     home_expenses = 0
     if not txn_df.empty:
-      home_expenses = (
-          txn_df[
-              (txn_df["col2"] == "HomeExpense")
-              & (txn_df["timestamp"].str.contains(curr_ym, na=False))
-          ]["col3"]
-          .astype(float)
-          .sum()
-      )
+      for _, r in txn_df.iterrows():
+        if r["col2"] == "HomeExpense" and curr_ym in str(r["timestamp"]):
+          try:
+            home_expenses += float(str(r["col3"]).replace(",", "") or 0)
+          except:
+            pass
   else:
     mobile_profit = 0
     if not mob_df.empty:
       sold_all = mob_df[mob_df["col7"] == "Sold"]
       for _, r in sold_all.iterrows():
-        mobile_profit += float(r["col11"] or 0) - float(r["col10"] or 0)
-    repair_profit = (
-        rep_df["col8"].astype(float).sum() if not rep_df.empty else 0
-    )
-    acc_profit = acc_df["col6"].astype(float).sum() if not acc_df.empty else 0
+        try:
+          mobile_profit += float(str(r["col11"]).replace(",", "") or 0) - float(
+              str(r["col10"]).replace(",", "") or 0
+          )
+        except:
+          pass
+
+    repair_profit = 0
+    if not rep_df.empty:
+      for _, r in rep_df.iterrows():
+        try:
+          repair_profit += float(str(r["col8"]).replace(",", "") or 0)
+        except:
+          pass
+
+    acc_profit = 0
+    if not acc_df.empty:
+      for _, r in acc_df.iterrows():
+        try:
+          acc_profit += float(str(r["col6"]).replace(",", "") or 0)
+        except:
+          pass
+
     ep_profit = 0
+    shop_expenses = 0
+    home_expenses = 0
     if not txn_df.empty:
-      ep_profit = (
-          txn_df[
-              txn_df["col2"].isin([
-                  "EasyPaisaSend",
-                  "EasyPaisaReceive",
-                  "JazzCashSend",
-                  "JazzCashReceive",
-              ])
-          ]["col4"]
-          .astype(float)
-          .sum()
-      )
-      shop_expenses = (
-          txn_df[txn_df["col2"] == "ShopExpense"]["col3"].astype(float).sum()
-      )
-      home_expenses = (
-          txn_df[txn_df["col2"] == "HomeExpense"]["col3"].astype(float).sum()
-      )
-    else:
-      shop_expenses, home_expenses = 0, 0
+      for _, r in txn_df.iterrows():
+        ttype = str(r["col2"])
+        try:
+          amt = float(str(r["col3"]).replace(",", "") or 0)
+          prof = float(str(r["col4"]).replace(",", "") or 0)
+        except:
+          amt, prof = 0, 0
+
+        if ttype in [
+            "EasyPaisaSend",
+            "EasyPaisaReceive",
+            "JazzCashSend",
+            "JazzCashReceive",
+        ]:
+          ep_profit += prof
+        elif ttype == "ShopExpense":
+          shop_expenses += amt
+        elif ttype == "HomeExpense":
+          home_expenses += amt
 
   net_profit = (
       mobile_profit + repair_profit + acc_profit + ep_profit
@@ -611,18 +646,21 @@ if page == "Dashboard":
   col6.metric("Shop Expenses", f"PKR {shop_expenses:,.0f}")
   col7.metric("Home Expenses", f"PKR {home_expenses:,.0f}")
 
+  # Available Stock Value Calculation
   stock_val = 0
   if not mob_df.empty:
     avail_mobs = mob_df[mob_df["col7"] == "Available"]
-    stock_val = (
-        avail_mobs["col10"]
-        .apply(
-            lambda x: float(x)
-            if pd.notna(x) and str(x).replace(".", "", 1).isdigit()
-            else 0.0
-        )
-        .sum()
-    )
+    for _, r in avail_mobs.iterrows():
+      val = 0
+      for col_key in ["col10", "col11"]:
+        try:
+          val_candidate = float(str(r[col_key]).replace(",", "") or 0)
+          if val_candidate > 0:
+            val = val_candidate
+            break
+        except:
+          pass
+      stock_val += val
   col8.metric("Available Stock Value", f"PKR {stock_val:,.0f}")
 
 # ============================================================
@@ -642,12 +680,17 @@ elif page == "CashDrawer":
 
   with st.form("cash_drawer_form"):
     st.write(f"### Date: {today_date}")
-    default_open = (
-        float(drawer_df.iloc[0]["col2"]) if not drawer_df.empty else 0.0
-    )
-    default_close = (
-        float(drawer_df.iloc[0]["col3"]) if not drawer_df.empty else 0.0
-    )
+    default_open = 0.0
+    default_close = 0.0
+    if not drawer_df.empty:
+      try:
+        default_open = float(str(drawer_df.iloc[0]["col2"]).replace(",", ""))
+      except:
+        pass
+      try:
+        default_close = float(str(drawer_df.iloc[0]["col3"]).replace(",", ""))
+      except:
+        pass
 
     c1, c2 = st.columns(2)
     opening_cash = c1.number_input(
@@ -668,9 +711,9 @@ elif page == "CashDrawer":
     ):
       if not drawer_df.empty:
         idx = drawer_df.index[0]
-        st.session_state.df_master.loc[
-            idx, ["col2", "col3", "timestamp"]
-        ] = [str(opening_cash), str(closing_cash), get_formatted_date()]
+        st.session_state.df_master.loc[idx, "col2"] = str(opening_cash)
+        st.session_state.df_master.loc[idx, "col3"] = str(closing_cash)
+        st.session_state.df_master.loc[idx, "timestamp"] = get_formatted_date()
       else:
         new_id = (
             int(st.session_state.df_master["id"].max() + 1)
@@ -679,7 +722,7 @@ elif page == "CashDrawer":
         )
         new_row = pd.DataFrame(
             [[
-                new_id,
+                str(new_id),
                 "CashDrawer",
                 today_date,
                 str(opening_cash),
@@ -734,7 +777,7 @@ elif page == "Udhar":
         )
         new_row = pd.DataFrame(
             [[
-                new_id,
+                str(new_id),
                 "Udhar",
                 u_name,
                 u_phone,
@@ -778,22 +821,25 @@ elif page == "Udhar":
     for idx, u_row in udhar_df.iterrows():
       with st.container(border=True):
         col_u1, col_u2, col_u3 = st.columns([2.5, 2, 1.5])
+        try:
+          amt_val = float(str(u_row["col4"]).replace(",", "") or 0)
+        except:
+          amt_val = 0.0
         col_u1.markdown(
             f"**{u_row['col1']}** ({u_row['col2']})<br>Item: {u_row['col3']}",
             unsafe_allow_html=True,
         )
         col_u2.markdown(
-            f"Amount: **PKR {float(u_row['col4']):,.0f}**<br>Return Date:"
-            f" {u_row['col5']}",
+            f"Amount: **PKR {amt_val:,.0f}**<br>Return Date: {u_row['col5']}",
             unsafe_allow_html=True,
         )
         with col_u3:
-          if st.button("Mark Paid ✅", key=f"paid_udhar_{u_row['id']}"):
+          if st.button("Mark Paid ✅", key=f"paid_udhar_{idx}"):
             st.session_state.df_master.loc[idx, "col8"] = "Paid"
             save_db(st.session_state.df_master, "Marked Udhar Paid")
             st.success("ادھار کلیئر ہو گیا!")
             st.rerun()
-          if st.button("Delete ❌", key=f"del_udhar_{u_row['id']}"):
+          if st.button("Delete ❌", key=f"del_udhar_{idx}"):
             st.session_state.df_master = st.session_state.df_master.drop(idx)
             save_db(st.session_state.df_master, "Deleted Udhar")
             st.rerun()
@@ -851,7 +897,7 @@ elif page == "Mobile Sales":
           )
           new_row = pd.DataFrame(
               [[
-                  new_id,
+                  str(new_id),
                   "Mobile",
                   c_name,
                   c_phone,
@@ -886,23 +932,25 @@ elif page == "Mobile Sales":
       st.info("فروخت کے لیے کوئی موبائل دستیاب نہیں ہے۔")
     else:
       mob_options = {}
-      for _, row in avail_mobs.iterrows():
+      for idx, row in avail_mobs.iterrows():
         b_name = row["col5"] if pd.notna(row["col5"]) else ""
         m_name = row["col6"] if pd.notna(row["col6"]) else ""
         cost_val = row["col10"] if pd.notna(row["col10"]) else "0"
-        label = f"{b_name} ({m_name}) — خرید قیمت: PKR {cost_val}"
-        mob_options[label] = row["id"]
+        label = (
+            f"{b_name} ({m_name}) — خرید قیمت: PKR {cost_val} [RowID: {idx}]"
+        )
+        mob_options[label] = idx
 
       selected_choice = st.selectbox(
           "Select Available Mobile", list(mob_options.keys())
       )
-      selected_id = mob_options[selected_choice]
-      sel_row = avail_mobs[avail_mobs["id"] == selected_id].iloc[0]
+      selected_idx = mob_options[selected_choice]
+      sel_row = st.session_state.df_master.loc[selected_idx]
 
       raw_cost = sel_row["col10"]
-      if pd.notna(raw_cost) and str(raw_cost).replace(".", "", 1).isdigit():
-        display_cost = float(raw_cost)
-      else:
+      try:
+        display_cost = float(str(raw_cost).replace(",", "") or 0)
+      except:
         display_cost = 0.0
 
       st.markdown("---")
@@ -934,10 +982,11 @@ elif page == "Mobile Sales":
           if not b_name or act_price <= 0:
             st.error("برائے مہربانی خریدار کا نام اور قیمت درج کریں۔")
           else:
-            idx = sel_row.name
-            st.session_state.df_master.loc[idx, "col7"] = "Sold"
-            st.session_state.df_master.loc[idx, "col11"] = str(act_price)
-            st.session_state.df_master.loc[idx, "timestamp"] = (
+            st.session_state.df_master.loc[selected_idx, "col7"] = "Sold"
+            st.session_state.df_master.loc[selected_idx, "col11"] = str(
+                act_price
+            )
+            st.session_state.df_master.loc[selected_idx, "timestamp"] = (
                 get_formatted_date()
             )
             if save_db(st.session_state.df_master, "Completed Mobile Sale"):
@@ -956,30 +1005,30 @@ elif page == "Mobile Sales":
           m_name = r["col6"] if pd.notna(r["col6"]) else ""
           status = r["col7"] if pd.notna(r["col7"]) else ""
           col_m1.markdown(
-              f"**{b_name} {m_name}** | Status: **{status}**"
+              f"**{b_name} {m_name}** | Status: **{status}** (ID: {idx})"
           )
 
           with col_m2:
-            edit_clicked = st.button("Edit ✏️", key=f"edit_mob_{r['id']}")
-            del_clicked = st.button("Delete ❌", key=f"del_mob_{r['id']}")
+            edit_clicked = st.button("Edit ✏️", key=f"edit_mob_{idx}")
+            del_clicked = st.button("Delete ❌", key=f"del_mob_{idx}")
 
             if del_clicked:
               st.session_state.df_master = st.session_state.df_master.drop(idx)
               save_db(st.session_state.df_master, "Deleted Mobile Entry")
               st.rerun()
 
-        if f"edit_mode_{r['id']}" not in st.session_state:
-          st.session_state[f"edit_mode_{r['id']}"] = False
+        if f"edit_mode_{idx}" not in st.session_state:
+          st.session_state[f"edit_mode_{idx}"] = False
 
         if edit_clicked:
-          st.session_state[f"edit_mode_{r['id']}"] = not st.session_state[
-              f"edit_mode_{r['id']}"
+          st.session_state[f"edit_mode_{idx}"] = not st.session_state[
+              f"edit_mode_{idx}"
           ]
           st.rerun()
 
-        if st.session_state.get(f"edit_mode_{r['id']}", False):
-          with st.form(key=f"edit_mob_form_{r['id']}"):
-            st.markdown(f"#### Edit Mobile ID: {r['id']}")
+        if st.session_state.get(f"edit_mode_{idx}", False):
+          with st.form(key=f"edit_mob_form_{idx}"):
+            st.markdown(f"#### Edit Mobile Index: {idx}")
             e_owner = st.text_input("Owner Name", value=str(r["col1"] or ""))
             e_phone = st.text_input("Mobile Number", value=str(r["col2"] or ""))
             e_brand = st.text_input("Brand", value=str(r["col5"] or ""))
@@ -991,31 +1040,28 @@ elif page == "Mobile Sales":
                 ["Available", "Sold"],
                 index=0 if r["col7"] == "Available" else 1,
             )
-            e_cp = st.number_input(
-                "Purchase Price",
-                value=float(r["col10"])
-                if pd.notna(r["col10"])
-                and str(r["col10"]).replace(".", "", 1).isdigit()
-                else 0.0,
-            )
-            e_sp = st.number_input(
-                "Accept/Sell Price",
-                value=float(r["col11"])
-                if pd.notna(r["col11"])
-                and str(r["col11"]).replace(".", "", 1).isdigit()
-                else 0.0,
-            )
+            try:
+              cp_val = float(str(r["col10"]).replace(",", "") or 0)
+            except:
+              cp_val = 0.0
+            try:
+              sp_val = float(str(r["col11"]).replace(",", "") or 0)
+            except:
+              sp_val = 0.0
+
+            e_cp = st.number_input("Purchase Price", value=cp_val)
+            e_sp = st.number_input("Accept/Sell Price", value=sp_val)
 
             if st.form_submit_button("Update Changes"):
-              st.session_state.df_master.loc[idx, "col1"] = e_owner
-              st.session_state.df_master.loc[idx, "col2"] = e_phone
-              st.session_state.df_master.loc[idx, "col5"] = e_brand
-              st.session_state.df_master.loc[idx, "col6"] = e_model
-              st.session_state.df_master.loc[idx, "col7"] = e_status
+              st.session_state.df_master.loc[idx, "col1"] = str(e_owner)
+              st.session_state.df_master.loc[idx, "col2"] = str(e_phone)
+              st.session_state.df_master.loc[idx, "col5"] = str(e_brand)
+              st.session_state.df_master.loc[idx, "col6"] = str(e_model)
+              st.session_state.df_master.loc[idx, "col7"] = str(e_status)
               st.session_state.df_master.loc[idx, "col10"] = str(e_cp)
               st.session_state.df_master.loc[idx, "col11"] = str(e_sp)
               save_db(st.session_state.df_master, "Updated Mobile Entry")
-              st.session_state[f"edit_mode_{r['id']}"] = False
+              st.session_state[f"edit_mode_{idx}"] = False
               st.success("موبائل کا ریکارڈ اپڈیٹ ہو گیا ہے!")
               st.rerun()
     else:
@@ -1055,7 +1101,7 @@ elif page == "Accessories":
         )
         new_row = pd.DataFrame(
             [[
-                new_id,
+                str(new_id),
                 "AccessorySale",
                 name,
                 category,
@@ -1089,11 +1135,15 @@ elif page == "Accessories":
   if not acc_df.empty:
     for idx, ac in acc_df.tail(15).iterrows():
       col_a1, col_a2 = st.columns([4, 1])
+      try:
+        p_val = float(str(ac["col6"]).replace(",", "") or 0)
+      except:
+        p_val = 0.0
       col_a1.markdown(
           f"**{ac['col1']}** ({ac['col2']}) - Qty: {ac['col3']} - Profit:"
-          f" **PKR {float(ac['col6']):,.0f}**"
+          f" **PKR {p_val:,.0f}**"
       )
-      if col_a2.button("Delete ❌", key=f"del_acc_{ac['id']}"):
+      if col_a2.button("Delete ❌", key=f"del_acc_{idx}"):
         st.session_state.df_master = st.session_state.df_master.drop(idx)
         save_db(st.session_state.df_master, "Deleted Accessory Sale")
         st.rerun()
@@ -1130,7 +1180,7 @@ elif page == "Repair":
         )
         new_row = pd.DataFrame(
             [[
-                new_id,
+                str(new_id),
                 "Repair",
                 r_name,
                 r_phone,
@@ -1167,11 +1217,14 @@ elif page == "Repair":
     for idx, r in rep_df.tail(15).iterrows():
       with st.container(border=True):
         colA, colB = st.columns([4, 1])
+        try:
+          rp_val = float(str(r["col8"]).replace(",", "") or 0)
+        except:
+          rp_val = 0.0
         colA.markdown(
-            f"**{r['col1']}** - {r['col3']} | Profit: **PKR"
-            f" {float(r['col8']):,.0f}**"
+            f"**{r['col1']}** - {r['col3']} | Profit: **PKR {rp_val:,.0f}**"
         )
-        if colB.button("Delete ❌", key=f"del_rep_{r['id']}"):
+        if colB.button("Delete ❌", key=f"del_rep_{idx}"):
           st.session_state.df_master = st.session_state.df_master.drop(idx)
           save_db(st.session_state.df_master, "Deleted Repair")
           st.rerun()
@@ -1217,7 +1270,7 @@ elif page == "EasyPaisa":
         )
         new_row = pd.DataFrame(
             [[
-                new_id,
+                str(new_id),
                 "Transaction",
                 service_type,
                 str(trans_amount),
@@ -1269,7 +1322,7 @@ elif page == "Expenses":
         )
         new_row = pd.DataFrame(
             [[
-                new_id,
+                str(new_id),
                 "Transaction",
                 e_type,
                 str(amount),
@@ -1293,7 +1346,7 @@ elif page == "Expenses":
           st.success("خرچہ محفوظ ہو گیا!")
 
 # ============================================================
-# UNIFIED ACTIVITY HISTORY (WITH EDIT & DELETE)
+# UNIFIED ACTIVITY HISTORY (WITH SAFE EDIT & DELETE)
 # ============================================================
 elif page == "History":
   st.subheader("📜 Unified Activity History & Ledger")
@@ -1308,44 +1361,44 @@ elif page == "History":
         c2.markdown(f"Details: {r['col1']} | {r['col2']}")
 
         with c3:
-          edit_hist = st.button("Edit ✏️", key=f"edit_hist_{r['id']}")
+          edit_hist = st.button("Edit ✏️", key=f"edit_hist_{idx}")
         with c4:
-          del_hist = st.button("Delete ❌", key=f"del_master_{r['id']}")
+          del_hist = st.button("Delete ❌", key=f"del_master_{idx}")
 
           if del_hist:
             st.session_state.df_master = st.session_state.df_master.drop(idx)
             save_db(st.session_state.df_master, "Deleted Record")
             st.rerun()
 
-        if f"edit_hist_mode_{r['id']}" not in st.session_state:
-          st.session_state[f"edit_hist_mode_{r['id']}"] = False
+        if f"edit_hist_mode_{idx}" not in st.session_state:
+          st.session_state[f"edit_hist_mode_{idx}"] = False
 
         if edit_hist:
-          st.session_state[f"edit_hist_mode_{r['id']}"] = not st.session_state[
-              f"edit_hist_mode_{r['id']}"
+          st.session_state[f"edit_hist_mode_{idx}"] = not st.session_state[
+              f"edit_hist_mode_{idx}"
           ]
           st.rerun()
 
-        if st.session_state.get(f"edit_hist_mode_{r['id']}", False):
-          with st.form(key=f"edit_hist_form_{r['id']}"):
-            st.markdown(f"#### Edit Record ID: {r['id']}")
+        if st.session_state.get(f"edit_hist_mode_{idx}", False):
+          with st.form(key=f"edit_hist_form_{idx}"):
+            st.markdown(f"#### Edit Record Index: {idx}")
             h_col1 = st.text_input("Detail 1 (col1)", value=str(r["col1"] or ""))
             h_col2 = st.text_input("Detail 2 (col2)", value=str(r["col2"] or ""))
             h_col3 = st.text_input("Detail 3 (col3)", value=str(r["col3"] or ""))
 
             if st.form_submit_button("Update History"):
-              st.session_state.df_master.loc[idx, "col1"] = h_col1
-              st.session_state.df_master.loc[idx, "col2"] = h_col2
-              st.session_state.df_master.loc[idx, "col3"] = h_col3
+              st.session_state.df_master.loc[idx, "col1"] = str(h_col1)
+              st.session_state.df_master.loc[idx, "col2"] = str(h_col2)
+              st.session_state.df_master.loc[idx, "col3"] = str(h_col3)
               save_db(st.session_state.df_master, "Updated History Record")
-              st.session_state[f"edit_hist_mode_{r['id']}"] = False
+              st.session_state[f"edit_hist_mode_{idx}"] = False
               st.success("ریکارڈ کامیابی سے اپڈیٹ ہو گیا!")
               st.rerun()
   else:
     st.info("کوئی ریکارڈ موجود نہیں۔")
 
 # ============================================================
-# REPORTS & INVENTORY (RENAMED COLUMNS FOR CLARITY)
+# REPORTS & INVENTORY
 # ============================================================
 elif page == "Reports":
   st.subheader("📈 Detailed Reports")
