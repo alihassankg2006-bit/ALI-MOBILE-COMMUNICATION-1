@@ -157,8 +157,6 @@ COLUMNS = [
     "timestamp",
 ]
 
-# Preloaded Default Mobiles Data matching your exact list
-# col1 = Owner Name (مالک کا نام), col2 = Phone/Contact, col3 = CNIC, col4 = IMEI, col5 = Brand, col6 = Color/Variant, col7 = Status, col10 = Purchase Price (خرید قیمت), col11 = Selling Price
 INITIAL_MOBILES = [
     [
         1,
@@ -171,8 +169,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "48000",
         "Used",
+        "48000",
         "48000",
         "2026-06-01 12:00",
     ],
@@ -187,8 +185,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "42000",
         "Used",
+        "42000",
         "42000",
         "2026-06-01 12:00",
     ],
@@ -203,8 +201,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "20000",
         "Used",
+        "20000",
         "20000",
         "2026-06-01 12:00",
     ],
@@ -219,8 +217,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "7000",
         "Used",
+        "7000",
         "7000",
         "2026-06-01 12:00",
     ],
@@ -235,8 +233,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "25000",
         "Used",
+        "25000",
         "25000",
         "2026-06-01 12:00",
     ],
@@ -251,8 +249,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "13500",
         "Used",
+        "13500",
         "13500",
         "2026-06-01 12:00",
     ],
@@ -267,8 +265,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "22000",
         "Used",
+        "22000",
         "22000",
         "2026-06-01 12:00",
     ],
@@ -283,8 +281,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "10000",
         "Used",
+        "10000",
         "10000",
         "2026-06-01 12:00",
     ],
@@ -299,8 +297,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "13500",
         "New",
+        "13500",
         "13500",
         "2026-06-01 12:00",
     ],
@@ -315,8 +313,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "13500",
         "Used",
+        "13500",
         "13500",
         "2026-06-01 12:00",
     ],
@@ -331,8 +329,8 @@ INITIAL_MOBILES = [
         "Available",
         "N/A",
         "N/A",
-        "5000",
         "Used",
+        "5000",
         "5000",
         "2026-06-01 12:00",
     ],
@@ -714,7 +712,7 @@ elif page == "Udhar":
   with st.form("udhar_form", clear_on_submit=True):
     c1, c2 = st.columns(2)
     u_name = c1.text_input("Customer Name (کسٹمر کا نام) *")
-    u_phone = c2.text_input("Customer Mobile Number (موبائل نمبر) *")
+    u_phone = c2.text_input("Customer Mobile Number (موبایل نمبر) *")
 
     c3, c4, c5 = st.columns(3)
     u_item = c3.text_input("Item / Cash Details *")
@@ -824,7 +822,7 @@ elif page == "Mobile Sales":
   with tab1:
     with st.form("purchase_mob_form", clear_on_submit=True):
       c1, c2, c3 = st.columns(3)
-      c_name = c1.text_input("Customer / Seller Name (مالک کا نام) *", value="زبیر مردان")
+      c_name = c1.text_input("Customer / Seller Name (مالک کا نام) *")
       c_phone = c2.text_input("Mobile Number *")
       c_cnic = c3.text_input("Seller CNIC (آئی ڈی کارڈ نمبر) *")
 
@@ -858,8 +856,8 @@ elif page == "Mobile Sales":
                   "Available",
                   "N/A",
                   "N/A",
-                  str(p_price),
                   condition,
+                  str(p_price),
                   str(p_price),
                   get_formatted_date(),
               ]],
@@ -896,14 +894,12 @@ elif page == "Mobile Sales":
       selected_id = mob_options[selected_choice]
       sel_row = avail_mobs[avail_mobs["id"] == selected_id].iloc[0]
 
-      # Safe float conversion helper for purchase price display
       raw_cost = sel_row["col10"]
       if pd.notna(raw_cost) and str(raw_cost).replace('.', '', 1).isdigit():
         display_cost = float(raw_cost)
       else:
         display_cost = 0.0
 
-      # Display full details of the selected mobile safely
       st.markdown("---")
       st.markdown("### 📋 منتخب کردہ موبائل کی مکمل تفصیلات:")
       d_col1, d_col2, d_col3 = st.columns(3)
